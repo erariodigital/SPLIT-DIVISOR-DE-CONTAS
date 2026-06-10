@@ -17,6 +17,7 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
   const [activeMonthFilter, setActiveMonthFilter] = useState<string>('todos'); // 'todos', '10', '09'
   const [activeFriendFilter, setActiveFriendFilter] = useState<string>('todos'); // 'todos', or friendId
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
+  const [activePaymentFilter, setActivePaymentFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
 
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -124,6 +125,24 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
       if (comanda.isPaid !== queryPaid) return false;
     }
 
+    // 4. Payment status of friend(s) verification (paid vs defaulting/unpaid)
+    if (activePaymentFilter !== 'todos') {
+      const activeFriends = Array.from(new Set(comanda.items.flatMap(item => item.assignedTo)));
+      const comandaFriends = activeFriends.length > 0 ? friends.filter(f => activeFriends.includes(f.id)) : friends;
+
+      if (activeFriendFilter !== 'todos') {
+        const hasPaid = comanda.isPaid || comanda.paidFriendIds?.includes(activeFriendFilter);
+        if (activePaymentFilter === 'pago' && !hasPaid) return false;
+        if (activePaymentFilter === 'pendente' && hasPaid) return false;
+      } else {
+        const pagouCount = comandaFriends.filter(f => comanda.isPaid || comanda.paidFriendIds?.includes(f.id)).length;
+        const insolvCount = comandaFriends.filter(f => !comanda.isPaid && !comanda.paidFriendIds?.includes(f.id)).length;
+
+        if (activePaymentFilter === 'pago' && pagouCount === 0) return false;
+        if (activePaymentFilter === 'pendente' && insolvCount === 0) return false;
+      }
+    }
+
     return true;
   });
 
@@ -199,6 +218,7 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
     const monthStr = activeMonthFilter === 'todos' ? 'TODOS OS MESES' : getMonthNamePT(activeMonthFilter);
     const friendStr = activeFriendFilter === 'todos' ? 'TODOS OS INTEGRANTES' : (friends.find(f => f.id === activeFriendFilter)?.name || '');
     const statusStr = activeStatusFilter.toUpperCase();
+    const paymentStr = activePaymentFilter === 'todos' ? 'TODOS' : (activePaymentFilter === 'pago' ? 'PAGOU PARTE' : 'INADIMPLENTES');
     
     let reportText = `📊 *SPLIT — DIVISOR DE CONTAS*\n`;
     reportText += `📄 *Relatório de Fechamento Consolidado*\n`;
@@ -207,12 +227,20 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
     reportText += `🔍 *Filtros Aplicados:*\n`;
     reportText += `• Mês: ${monthStr}\n`;
     reportText += `• Integrante: ${friendStr}\n`;
-    reportText += `• Status: ${statusStr}\n\n`;
+    reportText += `• Status da Conta: ${statusStr}\n`;
+    reportText += `• Situação Integrante: ${paymentStr}\n\n`;
     
     reportText += `📂 *Comandas listadas:*\n`;
     filteredComandas.forEach(c => {
       const total = getComandaTotal(c).toFixed(2).replace('.', ',');
-      reportText += `• ${c.name}: R$ ${total} (${c.items.length} itens, ${c.date})\n`;
+      const activeFriends = Array.from(new Set(c.items.flatMap(item => item.assignedTo)));
+      const comandaFriends = activeFriends.length > 0 ? friends.filter(f => activeFriends.includes(f.id)) : friends;
+      const pagaram = comandaFriends.filter(f => c.isPaid || c.paidFriendIds?.includes(f.id)).map(f => f.name).join(', ');
+      const inadimplentes = comandaFriends.filter(f => !c.isPaid && !c.paidFriendIds?.includes(f.id)).map(f => f.name).join(', ');
+      
+      reportText += `• ${c.name}: R$ ${total} (${c.date})\n`;
+      if (pagaram) reportText += `  └─ Pagaram: ${pagaram}\n`;
+      if (inadimplentes) reportText += `  └─ Inadimplentes: ${inadimplentes}\n`;
     });
     
     const spendingList = getSpendingData().filter(s => s.value > 0);
@@ -288,10 +316,10 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
         </div>
 
         {/* Filter Scrollbar segment */}
-        <div className="flex flex-nowrap gap-1 px-4 sm:px-6 pb-4 pt-2 w-full overflow-hidden">
+        <div className="flex flex-wrap gap-1.5 px-4 sm:px-6 pb-4 pt-2 w-full">
           
           {/* Month selector toggle dropdown option selection style */}
-          <div className="flex-1 min-w-[75px] sm:min-w-[90px] flex items-center gap-1 bg-indigo-50 border border-indigo-100/50 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
+          <div className="flex-1 min-w-[70px] sm:min-w-[85px] flex items-center gap-1 bg-indigo-50 border border-indigo-100/50 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
             <span className="font-sans text-[7px] sm:text-[9px] font-extrabold uppercase tracking-wider text-indigo-700">MÊS:</span>
             <select
               value={activeMonthFilter}
@@ -308,7 +336,7 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
           </div>
 
           {/* Friends list filter */}
-          <div className="flex-1 min-w-[80px] sm:min-w-[95px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
+          <div className="flex-1 min-w-[75px] sm:min-w-[90px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
             <span className="font-sans text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest">INTEG.:</span>
             <select
               value={activeFriendFilter}
@@ -323,7 +351,7 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
           </div>
 
           {/* Status selector */}
-          <div className="flex-1 min-w-[75px] sm:min-w-[90px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
+          <div className="flex-1 min-w-[70px] sm:min-w-[85px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
             <span className="font-sans text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest">STATUS:</span>
             <select
               value={activeStatusFilter}
@@ -333,6 +361,20 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
               <option value="todos">Todos</option>
               <option value="pago">PAGO</option>
               <option value="pendente">PENDENTE</option>
+            </select>
+          </div>
+
+          {/* Payment (Situação) selector */}
+          <div className="flex-1 min-w-[75px] sm:min-w-[95px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
+            <span className="font-sans text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest">PAGAM.:</span>
+            <select
+              value={activePaymentFilter}
+              onChange={(e) => setActivePaymentFilter(e.target.value)}
+              className="bg-transparent text-slate-700 font-sans text-[7.5px] sm:text-[9px] font-bold uppercase border-none focus:outline-none focus:ring-0 p-0 cursor-pointer text-left leading-none shrink-0"
+            >
+              <option value="todos">Todos</option>
+              <option value="pago">Já pagou</option>
+              <option value="pendente">Inadimplente</option>
             </select>
           </div>
 
@@ -389,6 +431,30 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
                             <span className="text-[8px] font-bold text-slate-450 uppercase mt-0.5 font-sans tracking-wide">
                               {comanda.items.length} ITENS • {friends.length} INTEGRANTES
                             </span>
+                            
+                            {/* Member payment situation list (paid vs defaulting/unpaid) */}
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {(() => {
+                                const activeFriends = Array.from(new Set(comanda.items.flatMap(item => item.assignedTo)));
+                                const comandaFriends = activeFriends.length > 0 ? friends.filter(f => activeFriends.includes(f.id)) : friends;
+                                const pagaram = comandaFriends.filter(f => comanda.isPaid || comanda.paidFriendIds?.includes(f.id));
+                                const inadimplentes = comandaFriends.filter(f => !comanda.isPaid && !comanda.paidFriendIds?.includes(f.id));
+                                return (
+                                  <>
+                                    {pagaram.map(f => (
+                                      <span key={f.id} className="text-[7.5px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 leading-none shrink-0" title="Pagou a parte">
+                                        ✓ {f.name}
+                                      </span>
+                                    ))}
+                                    {inadimplentes.map(f => (
+                                      <span key={f.id} className="text-[7.5px] font-extrabold text-rose-600 bg-rose-50 border border-rose-150 rounded px-1.5 py-0.5 leading-none shrink-0" title="Inadimplente (Não pagou)">
+                                        ✗ {f.name}
+                                      </span>
+                                    ))}
+                                  </>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
 
@@ -468,11 +534,14 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
                   <p className="text-[9px] text-slate-400 mt-0.5 uppercase">Data de emissão: {new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
 
-                <div className="space-y-1 py-1 text-[10px] uppercase font-bold text-slate-500 leading-relaxed">
+                <div className="space-y-1 py-1 text-[10px] uppercase font-bold text-slate-500 leading-relaxed border-b border-slate-100 pb-2">
                   <div><strong>FILTROS APLICADOS:</strong></div>
                   <div>- MÊS: {activeMonthFilter === 'todos' ? 'TODOS OS MESES' : getMonthNamePT(activeMonthFilter)}</div>
                   <div>- INTEGRANTE: {activeFriendFilter === 'todos' ? 'TODOS OS INTEGRANTES' : friends.find(f => f.id === activeFriendFilter)?.name}</div>
                   <div>- STATUS: {activeStatusFilter.toUpperCase()}</div>
+                  {activePaymentFilter !== 'todos' && (
+                    <div>- PAGAMENTO INTEGRANTE: {activePaymentFilter === 'pago' ? 'PAGOU A PARTE' : 'INADIMPLENTE'}</div>
+                  )}
                 </div>
 
                 {/* Items table */}
@@ -487,6 +556,24 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
                         <div>
                           <strong className="block text-slate-800 uppercase font-bold">{c.name}</strong>
                           <span className="text-[9px] text-slate-400 font-bold uppercase">{c.date} • {c.items.length} itens</span>
+                          <div className="flex flex-wrap gap-1 mt-1 font-sans text-[8px] font-bold">
+                            {(() => {
+                              const activeFriends = Array.from(new Set(c.items.flatMap(item => item.assignedTo)));
+                              const comandaFriends = activeFriends.length > 0 ? friends.filter(f => activeFriends.includes(f.id)) : friends;
+                              const pagaram = comandaFriends.filter(f => c.isPaid || c.paidFriendIds?.includes(f.id));
+                              const inadimplentes = comandaFriends.filter(f => !c.isPaid && !c.paidFriendIds?.includes(f.id));
+                              return (
+                                <>
+                                  {pagaram.map(f => (
+                                    <span key={f.id} className="text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-100">✓ {f.name}</span>
+                                  ))}
+                                  {inadimplentes.map(f => (
+                                    <span key={f.id} className="text-rose-600 bg-rose-50 px-1 py-0.5 rounded border border-rose-100">✗ {f.name}</span>
+                                  ))}
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                         <span className="font-bold text-slate-900 font-mono">R$ {getComandaTotal(c).toFixed(2).replace('.', ',')}</span>
                       </div>

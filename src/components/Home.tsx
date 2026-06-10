@@ -151,7 +151,7 @@ export default function Home({
       </div>
 
       {/* Lista de Comandas */}
-      <main className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-3.5 pb-24">
+      <main className="flex-1 overflow-y-auto no-scrollbar p-5 pb-24">
         {filteredComandas.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 py-14 border border-dashed border-slate-300 rounded-2xl text-center bg-white shadow-elegant">
             <p className="font-sans text-slate-500 text-xs font-bold uppercase mb-2">NENHUMA COMANDA ENCONTRADA</p>
@@ -168,64 +168,111 @@ export default function Home({
             </div>
           </div>
         ) : (
-          filteredComandas.map((comanda) => {
-            const total = calculateComandaTotal(comanda);
-            const originalCurrency = comanda.currency || 'BRL';
-            const isForeign = originalCurrency !== 'BRL';
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
+            {filteredComandas.map((comanda) => {
+              const total = calculateComandaTotal(comanda);
+              const originalCurrency = comanda.currency || 'BRL';
+              const isForeign = originalCurrency !== 'BRL';
 
-            // Calculate active friends in this comanda (who have assigned items)
-            const activeFriends = Array.from(new Set(comanda.items.flatMap(item => item.assignedTo)));
-            const totalActiveCount = activeFriends.length > 0 ? activeFriends.length : friends.length;
-            const paidCount = (comanda.paidFriendIds || []).filter(id => {
-              if (activeFriends.length > 0) {
-                return activeFriends.includes(id);
-              }
-              return friends.some(f => f.id === id);
-            }).length;
+              // Calculate active friends in this comanda (who have assigned items)
+              const activeFriends = Array.from(new Set(comanda.items.flatMap(item => item.assignedTo)));
+              const totalActiveCount = activeFriends.length > 0 ? activeFriends.length : friends.length;
+              const paidCount = (comanda.paidFriendIds || []).filter(id => {
+                if (activeFriends.length > 0) {
+                  return activeFriends.includes(id);
+                }
+                return friends.some(f => f.id === id);
+              }).length;
 
-            const isPartiallyPaid = !comanda.isPaid && paidCount > 0;
+              const isPartiallyPaid = !comanda.isPaid && paidCount > 0;
+              const paidPercent = totalActiveCount > 0 ? (paidCount / totalActiveCount) * 100 : 0;
 
-            return (
-              <div
-                key={comanda.id}
-                onClick={() => onSelectComanda(comanda.id)}
-                className="bg-white border border-slate-200/80 rounded-2xl shadow-elegant p-4.5 flex justify-between items-center cursor-pointer transition-all hover:border-indigo-200 hover:shadow-md hover:scale-[1.005] active:scale-[0.99]"
-              >
-                <div className="flex flex-col flex-1 mr-4 overflow-hidden">
-                  <div className="flex items-center mb-1">
-                    <span className={`text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded-md ${
-                      comanda.isPaid ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {comanda.isPaid ? 'FINALIZADA' : 'EM ABERTO'}
-                    </span>
-                    {isPartiallyPaid && (
-                      <span className="ml-1.5 text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 uppercase animate-pulse shrink-0">
-                        PARCIAL ({paidCount}/{totalActiveCount} PAGOU)
+              return (
+                <div
+                  key={comanda.id}
+                  onClick={() => onSelectComanda(comanda.id)}
+                  className="bg-white border border-slate-200/80 rounded-2xl shadow-elegant p-5 flex flex-col justify-between relative overflow-hidden cursor-pointer transition-all hover:border-indigo-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] group min-h-[148px]"
+                >
+                  {/* Card Content Top Block */}
+                  <div className="flex justify-between items-start gap-2.5 w-full">
+                    <div className="flex flex-col overflow-hidden flex-1">
+                      <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                        <span className={`text-[8px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-md leading-none ${
+                          comanda.isPaid ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
+                        }`}>
+                          {comanda.isPaid ? 'CONCLUÍDO' : 'EM ABERTO'}
+                        </span>
+                        {isPartiallyPaid && (
+                          <span className="text-[8px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100/60 leading-none">
+                            PARCIAL ({paidCount}/{totalActiveCount})
+                          </span>
+                        )}
+                      </div>
+                      
+                      <span className="font-sans font-bold text-slate-800 text-sm sm:text-base uppercase truncate tracking-tight leading-snug group-hover:text-indigo-650 transition-colors">
+                        {comanda.name}
                       </span>
-                    )}
+                    </div>
+
+                    <div className="text-slate-900 font-mono text-sm font-bold whitespace-nowrap shrink-0 flex items-center bg-slate-50 border border-slate-100 px-2.5 py-1.5 rounded-xl shadow-2xs leading-none">
+                      R$ {total.toFixed(2).replace('.', ',')}
+                    </div>
                   </div>
-                  <span className="font-sans font-bold text-slate-800 text-md uppercase truncate">
-                    {comanda.name}
-                  </span>
-                  <div className="flex items-center gap-2 text-slate-400 text-[10px] font-mono mt-1 uppercase">
-                    <span>{formatDatePT(comanda.date)}</span>
-                    {isForeign && (
-                      <>
-                        <span className="text-slate-350">•</span>
-                        <span className="text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded-md font-mono text-[9px] border border-indigo-100/50">
+
+                  {/* Card Footer Block - Meta + Overlapping Avatars */}
+                  <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between gap-1 w-full relative z-10">
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider leading-none">
+                        {formatDatePT(comanda.date)}
+                      </span>
+                      {isForeign && (
+                        <span className="text-indigo-600 font-bold font-mono text-[8px] uppercase tracking-wide mt-1">
                           {CURRENCIES[originalCurrency]?.symbol || '$'} {(comanda.items.reduce((acc, i) => acc + i.price * i.quantity, 0) * (1 + comanda.serviceFeePercent / 100)).toFixed(2).replace('.', ',')} {originalCurrency}
                         </span>
-                      </>
-                    )}
+                      )}
+                    </div>
+
+                    {/* Miniature overlapping participating member heads */}
+                    <div className="flex items-center -space-x-1.5 overflow-hidden">
+                      {friends
+                        .filter(f => activeFriends.length === 0 || activeFriends.includes(f.id))
+                        .slice(0, 4)
+                        .map((friend) => (
+                          <div
+                            key={friend.id}
+                            className="size-6 sm:size-6.5 rounded-full border-2 border-white flex items-center justify-center text-[8px] sm:text-[9px] font-sans font-black shadow-3xs"
+                            style={{
+                              backgroundColor: `${friend.color}18`,
+                              borderColor: '#ffffff',
+                              color: friend.color
+                            }}
+                            title={`${friend.name} (${comanda.paidFriendIds?.includes(friend.id) ? 'PAGO' : 'PENDENTE'})`}
+                          >
+                            {friend.avatar}
+                          </div>
+                        ))
+                      }
+                      {friends.filter(f => activeFriends.length === 0 || activeFriends.includes(f.id)).length > 4 && (
+                        <div className="size-6 sm:size-6.5 rounded-full border-2 border-white bg-slate-100 text-slate-500 font-sans text-[7.5px] font-black flex items-center justify-center shadow-3xs">
+                          +{friends.filter(f => activeFriends.length === 0 || activeFriends.includes(f.id)).length - 4}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sleek bottom visual progress line indicating comanda payments ratio */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/70">
+                    <div 
+                      className={`h-full transition-all duration-500 ease-out ${
+                        comanda.isPaid ? 'bg-emerald-500' : isPartiallyPaid ? 'bg-amber-400' : 'bg-rose-350'
+                      }`}
+                      style={{ width: `${comanda.isPaid ? 100 : paidPercent}%` }}
+                    />
                   </div>
                 </div>
-                
-                <div className="text-slate-900 font-mono text-base font-bold whitespace-nowrap shrink-0 flex items-center bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl shadow-xs">
-                  R$ {total.toFixed(2).replace('.', ',')}
-                </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </main>
 

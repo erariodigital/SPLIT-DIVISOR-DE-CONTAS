@@ -405,7 +405,7 @@ export default function Details({
       </div>
 
       {/* Main Form Scroller */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-36">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-28 lg:pb-8">
         
         {/* Title and date info */}
         <div className="p-6 pb-2">
@@ -442,7 +442,13 @@ export default function Details({
           </div>
         </div>
 
-        {/* Referência de Moeda da Comanda */}
+        {/* Responsive Grid Structure */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 md:px-6 mt-2">
+          
+          {/* LEFT COLUMN: Items & Food registry (Cols 1-7) */}
+          <div className="lg:col-span-7 flex flex-col gap-3.5">
+
+            {/* Referência de Moeda da Comanda */}
         <div className="mx-6 mb-4 mt-2 p-3 bg-white border border-slate-200/80 rounded-2xl flex items-center shadow-xs">
           <div className="flex items-center gap-2 overflow-hidden">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Moeda da Comanda:</span>
@@ -614,8 +620,7 @@ export default function Details({
                   onChange={(e) => updateServiceFee(parseInt(e.target.value, 10))}
                   className="border border-slate-200 rounded-lg bg-slate-50 p-1 px-1.5 font-sans text-xs font-bold text-slate-700 cursor-pointer focus:outline-none focus:border-indigo-500 transition-all"
                 >
-                  <option value={0}>0%</option>
-                  {Array.from({ length: 15 }, (_, i) => i + 1).map((percentage) => (
+                  {[0, 5, 10, 15, 20].map((percentage) => (
                     <option key={percentage} value={percentage}>
                       {percentage}%
                     </option>
@@ -637,18 +642,172 @@ export default function Details({
             <span>ADICIONAR ITEM MANUAL</span>
           </button>
         </div>
+
+        {/* Closing LEFT COLUMN */}
+        </div>
+
+        {/* RIGHT COLUMN: Real-Time Settle & Live Checkout stats panel (Visible on Desktop) */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col gap-4.5 lg:sticky lg:top-4 self-start">
+          
+          {/* Quick calculations bento display */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-elegant flex flex-col gap-4">
+            <div className="flex items-center gap-2 border-b border-slate-105 pb-2.5">
+              <span className="size-2 rounded-full bg-indigo-600 animate-pulse" />
+              <h4 className="font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                Resumo Geral da Conta
+              </h4>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans">
+                <span>Subtotal</span>
+                <span className="font-mono text-slate-700 text-xs font-bold">R$ {getSubtotal().toFixed(2).replace('.', ',')}</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans">
+                <span>Serviço ({comanda.serviceFeePercent}%)</span>
+                <span className="font-mono text-slate-700 text-xs font-bold">R$ {getServiceFeeValue().toFixed(2).replace('.', ',')}</span>
+              </div>
+              
+              <div className="border-t border-slate-100 pt-3 mt-1 flex justify-between items-start">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans mt-0.5">Valor Total</span>
+                <div className="text-right leading-tight">
+                  <span className="block font-mono text-xl font-bold text-indigo-600">
+                    R$ {getTotal().toFixed(2).replace('.', ',')}
+                  </span>
+                  {(comanda.currency || 'BRL') !== 'BRL' && (
+                    <span className="block font-mono text-[9px] text-slate-400 font-semibold uppercase tracking-tight mt-1">
+                      {formatCurrency(getTotal(), comanda.currency)} ({comanda.currency})
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Progress visualizer */}
+            {(() => {
+              const stats = getPaidStatus();
+              return (
+                <div className="bg-slate-50 border border-slate-150 p-3.5 rounded-2xl space-y-2.5">
+                  <div className="flex justify-between items-center font-sans">
+                    <span className="text-[9px] font-bold text-slate-450 uppercase">Recebido: R$ {stats.paidSum.toFixed(2).replace('.', ',')}</span>
+                    <span className="text-[8.5px] font-bold uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded leading-none">
+                      {stats.percentage}% PAGO
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${stats.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <button 
+              onClick={() => setIsCheckoutOpen(true)}
+              className="w-full bg-indigo-650 hover:bg-indigo-700 text-white font-sans font-bold uppercase py-3 rounded-xl text-[10.5px] tracking-widest cursor-pointer active:scale-95 transition-all flex justify-center items-center gap-1.5 shadow-md shadow-indigo-600/10 hover:shadow-lg mt-1"
+            >
+              <span>Visualizar Divisão</span>
+              <CheckCircle2 size={13} className="stroke-[2.5]" />
+            </button>
+          </div>
+
+          {/* Quick checklist of participants */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-elegant flex flex-col gap-3">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+              <span className="size-2 rounded-full bg-emerald-500" />
+              <h4 className="font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                Integrantes & Pagamento
+              </h4>
+            </div>
+
+            <div className="space-y-2 max-h-[200px] overflow-y-auto no-scrollbar">
+              {getFriendsShares().map((share) => {
+                const hasPaid = comanda.paidFriendIds?.includes(share.friendId);
+                return (
+                  <div 
+                    key={share.friendId}
+                    onClick={() => handleToggleFriendPaid(share.friendId)}
+                    className={`flex justify-between items-center p-2.5 border rounded-xl select-none cursor-pointer active:scale-[0.99] transition-all duration-150 ${
+                      hasPaid
+                        ? 'border-emerald-200 bg-emerald-50/10 text-emerald-800'
+                        : 'border-slate-150 bg-slate-50/50 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                      <div 
+                        className={`size-4 rounded-full border flex items-center justify-center transition-colors ${
+                          hasPaid ? 'bg-emerald-500 border-emerald-600 text-white' : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        <Check size={9} strokeWidth={4} className={hasPaid ? 'block' : 'hidden'} />
+                      </div>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-sans text-[10px] leading-none shrink-0">{share.avatar}</span>
+                        <span className={`text-[11px] font-sans font-bold uppercase truncate ${hasPaid ? 'line-through text-slate-400' : 'text-slate-750'}`}>
+                          {share.name}
+                        </span>
+                      </div>
+                    </div>
+                    <span className={`font-mono text-[10.5px] font-bold shrink-0 ${hasPaid ? 'text-slate-400' : 'text-slate-800'}`}>
+                      R$ {(share.total * (comanda.exchangeRate || 1.0)).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                );
+              })}
+              {getFriendsShares().length === 0 && (
+                <p className="text-center font-sans text-[10px] font-bold text-slate-400 uppercase py-6 tracking-wide">
+                  Nenhum integrante com itens divididos.
+                </p>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Closing Grid Split container */}
+        </div>
       </div>
 
-      {/* Sticky Bottom Summary Dashboard */}
-      <div className="absolute bottom-0 left-0 w-full bg-slate-900 text-white p-4.5 pb-5 flex flex-col gap-3 rounded-t-3xl shadow-elegant-lg z-25 animate-slide-up bg-opacity-[0.98] backdrop-blur-md">
-        {renderFooterTotal()}
+      {/* Sticky Bottom Summary Dashboard (Mobile / Tablet Only, hidden on Desktop via lg:hidden) */}
+      <div className="lg:hidden absolute bottom-0 left-0 w-full bg-slate-900 text-white p-3.5 px-5 pb-4 flex items-center justify-between gap-3.5 rounded-t-2xl shadow-elegant-lg z-25 animate-slide-up bg-opacity-[0.98] backdrop-blur-md">
+        <div className="flex-1 min-w-0">
+          {(() => {
+            const totalOrig = getTotal();
+            const billCurrency = comanda.currency || 'BRL';
+            const isForeign = billCurrency !== 'BRL';
+            const exchangeRate = comanda.exchangeRate || 1.0;
+            const totalBRL = totalOrig * exchangeRate;
+
+            return (
+              <div className="flex flex-col leading-tight">
+                <span className="text-[8.5px] font-bold uppercase tracking-widest text-slate-400">VALOR TOTAL</span>
+                {isForeign ? (
+                  <div className="flex flex-col mt-0.5">
+                    <span className="font-mono text-[9px] text-slate-400 font-semibold leading-none">
+                      {formatCurrency(totalOrig, billCurrency)}
+                    </span>
+                    <span className="font-mono text-base font-extrabold text-emerald-400 leading-none mt-1">
+                      {formatCurrency(totalBRL, 'BRL')}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-mono text-base font-extrabold text-emerald-400 mt-1">
+                    R$ {totalOrig.toFixed(2).replace('.', ',')}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+        </div>
         
         <button 
           onClick={() => setIsCheckoutOpen(true)}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-sans font-bold uppercase py-3 rounded-xl text-[11px] tracking-wider cursor-pointer active:scale-95 transition-all flex justify-center items-center gap-1.5 shadow-lg shadow-indigo-600/10 duration-200"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-sans font-extrabold uppercase px-4.5 py-2.5 rounded-xl text-[10px] tracking-wider cursor-pointer active:scale-95 transition-all flex items-center gap-1 shadow-md shadow-indigo-600/15 duration-200 shrink-0"
         >
           <span>FECHAR CONTA</span>
-          <CheckCircle2 size={13} className="stroke-[2.5]" />
+          <CheckCircle2 size={11} className="stroke-[2.5]" />
         </button>
       </div>
 
