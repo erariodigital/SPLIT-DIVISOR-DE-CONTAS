@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Harmonizing colorway with the gold, amber, and brass of the official logo */
+  --color-indigo-50: #fcf9ef;
+  --color-indigo-100: #f5eed3;
+  --color-indigo-200: #eeddba;
+  --color-indigo-300: #e2c67e;
+  --color-indigo-400: #d5ad4c;
+  --color-indigo-500: #c59b36;
+  --color-indigo-600: #b28623;
+  --color-indigo-700: #946c17;
+  --color-indigo-800: #75530e;
+  --color-indigo-900: #553a06;
+  --color-indigo-950: #332101;
+}
+
+@layer utilities {
+  .shadow-elegant {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05), 0 0 0 1px rgb(241 245 249);
+  }
+  .shadow-elegant-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08), 0 0 0 1px rgb(241 245 249);
+  }
+}
+
+/* Hide scrollbar with clean CSS utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes infinite-loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-infinite-loading {
+  animation: infinite-loading 1.6s infinite linear;
+}
