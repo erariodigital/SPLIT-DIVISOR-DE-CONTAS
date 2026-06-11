@@ -16,6 +16,7 @@ interface DetailsProps {
   onUpdateComanda: (updated: Comanda) => void;
   onAddFriendGlobal: (name: string) => void;
   onOpenSidebar?: () => void;
+  isAdmin?: boolean;
 }
 
 export default function Details({
@@ -25,7 +26,8 @@ export default function Details({
   onBack,
   onUpdateComanda,
   onAddFriendGlobal,
-  onOpenSidebar
+  onOpenSidebar,
+  isAdmin = false
 }: DetailsProps) {
   const [expandedItemIds, setExpandedItemIds] = useState<Record<string, boolean>>({ 'item-2': true }); // Expand Fritas by default like mock image
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
@@ -395,13 +397,17 @@ export default function Details({
         <div className="font-sans text-[10px] font-bold tracking-widest text-slate-500 uppercase">
           DIVISÃO DA CONTA
         </div>
-        <button 
-          onClick={() => setIsAddFriendOpen(true)}
-          title="Adicionar Novo Amigo"
-          className="flex items-center justify-center size-9 border border-slate-200 bg-white rounded-xl shadow-xs cursor-pointer hover:bg-slate-50 active:scale-95 transition-all text-slate-650"
-        >
-          <UserPlus size={16} />
-        </button>
+        {isAdmin ? (
+          <button 
+            onClick={() => setIsAddFriendOpen(true)}
+            title="Adicionar Novo Amigo"
+            className="flex items-center justify-center size-9 border border-slate-200 bg-white rounded-xl shadow-xs cursor-pointer hover:bg-slate-50 active:scale-95 transition-all text-slate-650"
+          >
+            <UserPlus size={16} />
+          </button>
+        ) : (
+          <div className="w-9 h-9" />
+        )}
       </div>
 
       {/* Main Form Scroller */}
@@ -412,10 +418,19 @@ export default function Details({
           <input
             type="text"
             value={comanda.name}
+            disabled={!isAdmin}
             onChange={(e) => updateComandaName(e.target.value)}
-            className="w-full bg-transparent font-sans text-xl font-bold text-slate-900 border-b-2 border-transparent hover:border-dashed hover:border-slate-300 focus:border-indigo-500 focus:outline-none pb-1 uppercase tracking-tight transition-all"
+            className={`w-full bg-transparent font-sans text-xl font-bold text-slate-900 pb-1 uppercase tracking-tight transition-all ${
+              isAdmin ? 'border-b-2 border-transparent hover:border-dashed hover:border-slate-300 focus:border-indigo-500 focus:outline-none' : 'border-none select-none cursor-default'
+            }`}
             placeholder="NOME DA COMANDA"
           />
+          {!isAdmin && (
+            <div className="mt-1.5 flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-amber-800 text-[10px] font-sans font-bold uppercase tracking-wider select-none animate-fade-in">
+              <Lock size={12} className="stroke-[2.5]" />
+              <span>Modo de Visualização: Apenas o Administrador pode efetuar alterações</span>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2 border-b border-slate-100 pb-2">
             <div className="flex gap-2 text-slate-400 font-sans text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
               <span>{formatDatePT(comanda.date)}</span>
@@ -449,9 +464,9 @@ export default function Details({
           <div className="lg:col-span-7 flex flex-col gap-3.5">
 
             {/* Referência de Moeda da Comanda */}
-        <div className="mx-6 mb-4 mt-2 p-3 bg-white border border-slate-200/80 rounded-2xl flex items-center shadow-xs">
+        <div className="hidden">
           <div className="flex items-center gap-2 overflow-hidden">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Moeda da Comanda:</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0"></span>
             <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50/50 border border-indigo-100 px-2.5 py-0.5 rounded-md uppercase truncate">
               {comanda.currency || 'BRL'}
             </span>
@@ -540,8 +555,11 @@ export default function Details({
                         return (
                           <button
                             key={friend.id}
+                            disabled={!isAdmin}
                             onClick={() => toggleFriendOnItem(item.id, friend.id)}
-                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-[10px] font-sans font-bold uppercase tracking-wider transition-all cursor-pointer hover:bg-slate-50 ${
+                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-[10px] font-sans font-bold uppercase tracking-wider transition-all ${
+                              !isAdmin ? 'cursor-not-allowed opacity-90' : 'cursor-pointer hover:bg-slate-50'
+                            } ${
                               isSelected 
                                 ? 'bg-indigo-55 border-indigo-200/60 text-indigo-700 shadow-xs' 
                                 : 'bg-white border-slate-200 text-slate-550'
@@ -576,30 +594,32 @@ export default function Details({
                           )
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingItem(item);
-                            setEditItemName(item.name);
-                            setEditItemPrice(item.price.toString());
-                            setEditItemQty(item.quantity.toString());
-                          }}
-                          className="text-indigo-650 hover:text-indigo-800 flex items-center gap-1 font-sans text-[9px] uppercase font-bold cursor-pointer transition-colors"
-                          title="Editar este item"
-                        >
-                          <Edit size={11} />
-                          <span>Editar</span>
-                        </button>
-                        <span className="text-slate-200">|</span>
-                        <button 
-                          onClick={() => deleteItem(item.id)}
-                          className="text-rose-500 hover:text-rose-600 flex items-center gap-1 font-sans text-[9px] uppercase font-bold cursor-pointer transition-colors"
-                          title="Deletar este item"
-                        >
-                          <Trash2 size={11} />
-                          <span>Remover</span>
-                        </button>
-                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingItem(item);
+                              setEditItemName(item.name);
+                              setEditItemPrice(item.price.toString());
+                              setEditItemQty(item.quantity.toString());
+                            }}
+                            className="text-indigo-650 hover:text-indigo-800 flex items-center gap-1 font-sans text-[9px] uppercase font-bold cursor-pointer transition-colors"
+                            title="Editar este item"
+                          >
+                            <Edit size={11} />
+                            <span>Editar</span>
+                          </button>
+                          <span className="text-slate-200">|</span>
+                          <button 
+                            onClick={() => deleteItem(item.id)}
+                            className="text-rose-500 hover:text-rose-600 flex items-center gap-1 font-sans text-[9px] uppercase font-bold cursor-pointer transition-colors"
+                            title="Deletar este item"
+                          >
+                            <Trash2 size={11} />
+                            <span>Remover</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -617,8 +637,11 @@ export default function Details({
               <div className="flex items-center gap-3">
                 <select
                   value={comanda.serviceFeePercent}
+                  disabled={!isAdmin}
                   onChange={(e) => updateServiceFee(parseInt(e.target.value, 10))}
-                  className="border border-slate-200 rounded-lg bg-slate-50 p-1 px-1.5 font-sans text-xs font-bold text-slate-700 cursor-pointer focus:outline-none focus:border-indigo-500 transition-all"
+                  className={`border border-slate-200 rounded-lg p-1 px-1.5 font-sans text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-all ${
+                    !isAdmin ? 'bg-slate-100 cursor-not-allowed opacity-80' : 'bg-slate-50 cursor-pointer'
+                  }`}
                 >
                   {[0, 5, 10, 15, 20].map((percentage) => (
                     <option key={percentage} value={percentage}>
@@ -634,13 +657,20 @@ export default function Details({
           </div>
 
           {/* Trigger button for manual invoice insertions */}
-          <button 
-            onClick={() => setIsAddItemOpen(true)}
-            className="w-full py-4 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/10 rounded-2xl text-slate-500 font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2 cursor-pointer bg-white shadow-xs"
-          >
-            <Plus size={14} />
-            <span>ADICIONAR ITEM MANUAL</span>
-          </button>
+          {isAdmin ? (
+            <button 
+              onClick={() => setIsAddItemOpen(true)}
+              className="w-full py-4 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/10 rounded-2xl text-slate-500 font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2 cursor-pointer bg-white shadow-xs"
+            >
+              <Plus size={14} />
+              <span>ADICIONAR ITEM MANUAL</span>
+            </button>
+          ) : (
+            <div className="w-full py-4 border border-dashed border-slate-200 rounded-2xl text-slate-400 bg-slate-100 flex items-center justify-center gap-2 select-none">
+              <Lock size={12} />
+              <span className="font-sans text-[10px] font-bold uppercase tracking-wider">Edição exclusiva para Administradores</span>
+            </div>
+          )}
         </div>
 
         {/* Closing LEFT COLUMN */}
@@ -728,8 +758,14 @@ export default function Details({
                 return (
                   <div 
                     key={share.friendId}
-                    onClick={() => handleToggleFriendPaid(share.friendId)}
-                    className={`flex justify-between items-center p-2.5 border rounded-xl select-none cursor-pointer active:scale-[0.99] transition-all duration-150 ${
+                    onClick={() => {
+                      if (isAdmin) handleToggleFriendPaid(share.friendId);
+                    }}
+                    className={`flex justify-between items-center p-2.5 border rounded-xl select-none transition-all duration-150 ${
+                      isAdmin 
+                        ? 'cursor-pointer active:scale-[0.99]' 
+                        : 'cursor-default'
+                    } ${
                       hasPaid
                         ? 'border-emerald-200 bg-emerald-50/10 text-emerald-800'
                         : 'border-slate-150 bg-slate-50/50 hover:bg-slate-50 text-slate-700'
@@ -877,8 +913,14 @@ export default function Details({
                     return (
                       <div 
                         key={share.friendId}
-                        onClick={() => handleToggleFriendPaid(share.friendId)}
-                        className={`flex justify-between items-center p-3 border rounded-xl select-none cursor-pointer active:scale-[0.99] transition-all ${
+                        onClick={() => {
+                          if (isAdmin) handleToggleFriendPaid(share.friendId);
+                        }}
+                        className={`flex justify-between items-center p-3 border rounded-xl select-none transition-all ${
+                          isAdmin 
+                            ? 'cursor-pointer active:scale-[0.99]' 
+                            : 'cursor-default'
+                        } ${
                           hasPaid 
                             ? 'border-emerald-250 bg-emerald-50/30 hover:bg-emerald-50/50 shadow-xs' 
                             : 'border-slate-200 bg-white hover:bg-slate-50/50 shadow-elegant'
@@ -946,16 +988,18 @@ export default function Details({
 
             {/* Bottom Settle Actions */}
             <div className="p-4 border-t border-slate-100 flex gap-2 bg-slate-50 shrink-0">
-              <button
-                onClick={handleToggleEntireComandaPaid}
-                className={`flex-1 p-3 rounded-xl font-sans font-bold text-xs uppercase tracking-wider text-center transition-all active:scale-95 cursor-pointer block ${
-                  comanda.isPaid 
-                    ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-550/10' 
-                    : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-550/10'
-                }`}
-              >
-                {comanda.isPaid ? 'Estornar Todos' : 'Quitar Todos'}
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={handleToggleEntireComandaPaid}
+                  className={`flex-1 p-3 rounded-xl font-sans font-bold text-xs uppercase tracking-wider text-center transition-all active:scale-95 cursor-pointer block ${
+                    comanda.isPaid 
+                      ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-550/10' 
+                      : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-550/10'
+                  }`}
+                >
+                  {comanda.isPaid ? 'Estornar Todos' : 'Quitar Todos'}
+                </button>
+              )}
               
               <button
                 onClick={() => setIsCheckoutOpen(false)}

@@ -38,4 +38,5 @@ export interface UserProfile {
   pixKey: string;
   avatar: string; // base64 or URL or SVG initials
   phone?: string;
+  isAdmin?: boolean;
 }

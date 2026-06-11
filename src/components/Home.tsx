@@ -15,6 +15,7 @@ interface HomeProps {
   onSelectComanda: (id: string) => void;
   onAddManualComanda: (name: string) => void;
   onOpenSidebar?: () => void;
+  isAdmin?: boolean;
 }
 
 export default function Home({
@@ -22,7 +23,8 @@ export default function Home({
   friends,
   onSelectComanda,
   onAddManualComanda,
-  onOpenSidebar
+  onOpenSidebar,
+  isAdmin = false
 }: HomeProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -112,19 +114,34 @@ export default function Home({
             <h1 className="text-slate-900 font-sans text-sm font-black uppercase tracking-wider">
               SPLIT — DIVISOR DE CONTAS
             </h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-              Gerenciamento Oficial de Comandas
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                Gerenciamento Oficial
+              </span>
+              <span className={`text-[7.5px] font-black uppercase px-1 leading-none border -mt-0.5 rounded ${
+                isAdmin 
+                  ? 'bg-indigo-50 border-indigo-150 text-indigo-700' 
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              }`}>
+                {isAdmin ? 'Admin' : 'Integrante'}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-4 py-2.5 text-[10px] font-sans font-extrabold uppercase tracking-wider shadow-md shadow-indigo-600/10 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-          >
-            <Plus size={13} className="stroke-[2.5px]" />
-            <span>Nova Comanda</span>
-          </button>
+          {isAdmin ? (
+            <button
+              onClick={() => setIsNewModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-4 py-2.5 text-[10px] font-sans font-extrabold uppercase tracking-wider shadow-md shadow-indigo-600/10 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Plus size={13} className="stroke-[2.5px]" />
+              <span>Nova Comanda</span>
+            </button>
+          ) : (
+            <span className="text-[8px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1.5 rounded-lg uppercase tracking-wider flex items-center gap-1 shrink-0 select-none">
+              Apenas Admin
+            </span>
+          )}
         </div>
       </div>
 

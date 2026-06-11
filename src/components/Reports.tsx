@@ -11,9 +11,10 @@ interface ReportsProps {
   comandas: Comanda[];
   friends: Friend[];
   onBackToHome?: () => void;
+  isSharedMode?: boolean;
 }
 
-export default function Reports({ comandas, friends, onBackToHome }: ReportsProps) {
+export default function Reports({ comandas, friends, onBackToHome, isSharedMode = false }: ReportsProps) {
   const [activeMonthFilter, setActiveMonthFilter] = useState<string>('todos'); // 'todos', '10', '09'
   const [activeFriendFilter, setActiveFriendFilter] = useState<string>('todos'); // 'todos', or friendId
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
@@ -22,6 +23,50 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+
+  const handleCopySharedLink = () => {
+    let base = window.location.origin + window.location.pathname;
+    
+    // Check if the origin/hostname is a Google AI Studio parent frame domain
+    if (
+      window.location.hostname.includes('google.com') || 
+      window.location.hostname.includes('aistudio') || 
+      window.location.hostname === ''
+    ) {
+      try {
+        if (document.referrer && !document.referrer.includes('google.com') && !document.referrer.includes('aistudio')) {
+          const refUrl = new URL(document.referrer);
+          base = refUrl.origin + refUrl.pathname;
+        } else {
+          // Robust fallback direct to the preview container URL in AI Studio
+          base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+        }
+      } catch (_) {
+        base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+      }
+    }
+    
+    // Normalize suffix (avoid trailing index.html issues)
+    if (base.endsWith('index.html')) {
+      base = base.substring(0, base.length - 10);
+    }
+    if (!base.endsWith('/')) {
+      base += '/';
+    }
+    
+    // Construct final URL
+    const sharedUrl = base + "?modo=relatorio";
+    
+    navigator.clipboard.writeText(sharedUrl)
+      .then(() => {
+        setShareToastMessage('LINK DE ACESSO COPIADO COM SUCESSO!');
+        setTimeout(() => setShareToastMessage(null), 3000);
+      })
+      .catch(() => {
+        setShareToastMessage('ERRO AO COPIAR LINK DE ACESSO');
+        setTimeout(() => setShareToastMessage(null), 3000);
+      });
+  };
 
   // Dynamically extract unique months from existing comanda logs
   const availableMonths = Array.from(
@@ -310,6 +355,11 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
           <h2 className="text-slate-900 text-xl font-sans font-bold leading-none tracking-tight flex-1 uppercase">
             Relatórios
           </h2>
+          {isSharedMode && (
+            <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200/50 text-emerald-800 rounded-lg px-2.5 py-1 text-[7.5px] font-sans font-extrabold uppercase tracking-wider select-none shrink-0 mr-1 animate-pulse">
+              <span>● Integrante (Leitura)</span>
+            </div>
+          )}
           <div className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 shadow-xs">
             <Filter size={13} className="text-slate-400" />
           </div>
@@ -488,13 +538,26 @@ export default function Reports({ comandas, friends, onBackToHome }: ReportsProp
           </div>
         )}
 
-        <button 
-          onClick={displayPrintPreview}
-          className="w-full max-w-xs bg-indigo-600 text-white py-3 rounded-xl shadow-lg shadow-indigo-600/10 font-sans font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition-all active:scale-[0.99] cursor-pointer"
-        >
-          <FileText size={13} className="text-white fill-[transparent]" />
-          <span>GERAR RELATÓRIO PDF</span>
-        </button>
+        <div className="flex gap-2 w-full max-w-xs">
+          <button 
+            onClick={displayPrintPreview}
+            className="flex-1 bg-indigo-600 text-white py-3 rounded-xl shadow-lg shadow-indigo-600/10 font-sans font-bold text-[10.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-indigo-700 transition-all active:scale-[0.99] cursor-pointer"
+          >
+            <FileText size={13} className="text-white fill-[transparent]" />
+            <span>GERAR PDF</span>
+          </button>
+
+          {!isSharedMode && (
+            <button 
+              onClick={handleCopySharedLink}
+              className="flex-1 bg-emerald-600 text-white py-3 rounded-xl shadow-lg shadow-emerald-600/10 font-sans font-bold text-[10.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-emerald-700 transition-all active:scale-[0.99] cursor-pointer"
+              title="Gerar e copiar link de acesso para integrantes"
+            >
+              <Share2 size={13} className="text-white" />
+              <span>LINK ACESSO</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Modal - Print Preview Invoice */}

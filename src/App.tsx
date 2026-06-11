@@ -33,11 +33,11 @@ export default function App() {
         }
       } catch (_) {}
     }
-    // Set default initial profiles corresponding to LUCAS, MARIA, JOÃO SILVA, PEDRO
+    // Set default initial profiles corresponding to LUCAS, MARIA, JOÃO SILVA, PEDRO (JOÃO is Admin by default)
     return [
       { id: '1', name: 'LUCAS', email: 'lucas@email.com', pixKey: '', phone: '', avatar: '' },
       { id: '2', name: 'MARIA', email: 'maria@email.com', pixKey: '', phone: '', avatar: '' },
-      { id: '3', name: 'JOÃO SILVA', email: 'joao.silva@email.com', pixKey: '+55 11 98765-4321', phone: '', avatar: '' },
+      { id: '3', name: 'JOÃO SILVA', email: 'joao.silva@email.com', pixKey: '+55 11 98765-4321', phone: '', avatar: '', isAdmin: true },
       { id: '4', name: 'PEDRO', email: 'pedro@email.com', pixKey: '', phone: '', avatar: '' },
     ];
   });
@@ -76,6 +76,28 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'comandas' | 'relatorios' | 'dashboard'>('comandas');
   const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  
+  // Shared access mode check from URL
+  const isSharedMode = typeof window !== 'undefined' && (
+    window.location.search.includes('modo=relatorio') || 
+    window.location.search.includes('shared=true')
+  );
+
+  const [isIdentityUnlocked, setIsIdentityUnlocked] = useState(() => {
+    return localStorage.getItem('split_identity_unlocked') === 'true';
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setIsIdentityUnlocked(localStorage.getItem('split_identity_unlocked') === 'true');
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const activeProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
+  const isAutoOwner = activeProfile?.email?.trim().toLowerCase() === 'erariodigital@gmail.com';
+  const isAdmin = activeProfile?.isAdmin === true || isAutoOwner || isIdentityUnlocked;
   
   // Sync state changes with local storage securely
   useEffect(() => {
@@ -151,6 +173,16 @@ export default function App() {
 
   // Render the appropriate component
   const renderScreen = () => {
+    if (isSharedMode) {
+      return (
+        <Reports
+          comandas={comandas}
+          friends={friends}
+          isSharedMode={true}
+        />
+      );
+    }
+
     if (selectedComandaId) {
       const activeComanda = comandas.find(c => c.id === selectedComandaId);
       if (activeComanda) {
@@ -163,6 +195,7 @@ export default function App() {
             onUpdateComanda={handleUpdateComanda}
             onAddFriendGlobal={handleAddFriendGlobal}
             onOpenSidebar={() => setIsSidebarOpen(true)}
+            isAdmin={isAdmin}
           />
         );
       }
@@ -177,6 +210,7 @@ export default function App() {
             onSelectComanda={(id) => setSelectedComandaId(id)}
             onAddManualComanda={handleAddManualComanda}
             onOpenSidebar={() => setIsSidebarOpen(true)}
+            isAdmin={isAdmin}
           />
         );
       case 'relatorios':
@@ -200,8 +234,8 @@ export default function App() {
     }
   };
 
-  // Hide the navigation footer when actively scanning or editing a comanda item list
-  const hideFooter = false;
+  // Hide the navigation footer when actively scanning or editing a comanda item list, or in shared view mode
+  const hideFooter = isSharedMode;
 
   return (
     <div className="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-800 font-sans flex flex-col items-center justify-center relative overflow-hidden animate-fade-in">

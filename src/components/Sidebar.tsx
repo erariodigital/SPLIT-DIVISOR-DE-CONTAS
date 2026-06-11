@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Comanda } from '../types';
-import { X, Save, AlertTriangle, Check, ShieldAlert, Coins, Plus, Trash2, QrCode, Phone, Mail, Upload, Smartphone, Sparkles, RefreshCw, Image } from 'lucide-react';
+import { X, Save, AlertTriangle, Check, ShieldAlert, Coins, Plus, Trash2, QrCode, Phone, Mail, Upload, Smartphone, Sparkles, RefreshCw, Lock, Unlock, KeyRound } from 'lucide-react';
 import { CURRENCIES, identifyCurrency } from '../utils/currency';
 import brandLogo from '../assets/images/split_brutalist_logo_1781082679930.png';
 
@@ -58,6 +58,28 @@ export default function Sidebar({
   });
   const [logoSuccessMsg, setLogoSuccessMsg] = useState(false);
 
+  // Identity lock states for owner restriction
+  const [isIdentityUnlocked, setIsIdentityUnlocked] = useState(() => {
+    return localStorage.getItem('split_identity_unlocked') === 'true';
+  });
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockInput, setUnlockInput] = useState('');
+  const [unlockError, setUnlockError] = useState('');
+
+  const dispatchStorageChange = () => {
+    try {
+      window.dispatchEvent(new Event('storage'));
+    } catch (_) {
+      try {
+        const ev = document.createEvent('Event');
+        ev.initEvent('storage', true, true);
+        window.dispatchEvent(ev);
+      } catch (err) {
+        console.error('Failed to dispatch storage event', err);
+      }
+    }
+  };
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -66,7 +88,7 @@ export default function Sidebar({
         const base64String = reader.result as string;
         setAppLogo(base64String);
         localStorage.setItem('split_custom_app_logo', base64String);
-        window.dispatchEvent(new Event('storage'));
+        dispatchStorageChange();
         setLogoSuccessMsg(true);
         setTimeout(() => setLogoSuccessMsg(false), 3000);
       };
@@ -77,7 +99,7 @@ export default function Sidebar({
   const handleResetLogo = () => {
     setAppLogo(brandLogo);
     localStorage.removeItem('split_custom_app_logo');
-    window.dispatchEvent(new Event('storage'));
+    dispatchStorageChange();
     setLogoSuccessMsg(true);
     setTimeout(() => setLogoSuccessMsg(false), 3000);
   };
@@ -187,6 +209,10 @@ export default function Sidebar({
     return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(payload)}`;
   };
 
+  const activeProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
+  const isAutoOwner = activeProfile?.email?.trim().toLowerCase() === 'erariodigital@gmail.com';
+  const isOwner = isAutoOwner || isIdentityUnlocked;
+
   if (!isOpen) return null;
 
   return (
@@ -247,23 +273,43 @@ export default function Sidebar({
           </div>
 
           {/* SEÇÃO DE LOGO & IDENTIDADE DO APLICATIVO */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-3.5 shadow-xs">
-            <div className="flex items-center gap-2 border-b border-slate-150 pb-2">
-              <Smartphone size={15} className="text-indigo-650 shrink-0" />
-              <span className="font-sans text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">
-                Identidade do App (Celular)
-              </span>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-3.5 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-150 pb-2">
+              <div className="flex items-center gap-2">
+                <Smartphone size={15} className="text-indigo-650 shrink-0" />
+                <span className="font-sans text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">
+                  Identidade do App (Celular)
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {isOwner ? (
+                  <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 text-[7px] font-black uppercase px-1.5 py-0.5 rounded flex items-center gap-0.5" title="Acesso liberado para o dono">
+                    <Unlock size={8} className="stroke-[3]" />
+                    {isAutoOwner ? 'Dono' : 'Liberado'}
+                  </span>
+                ) : (
+                  <span className="bg-amber-50 border border-amber-100 text-amber-700 text-[7px] font-black uppercase px-1.5 py-0.5 rounded flex items-center gap-0.5" title="Acesso restrito ao dono">
+                    <Lock size={8} className="stroke-[3]" />
+                    Protegido
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 relative">
               {/* Actual Image Source representation */}
               <div className="size-16 rounded-2xl bg-white border border-slate-300 flex items-center justify-center shadow-md overflow-hidden shrink-0 group relative">
                 <img 
                   src={appLogo} 
                   alt="Logo Split" 
-                  className="size-full object-cover rounded-2xl"
+                  className={`size-full object-cover rounded-2xl transition-all duration-300 ${!isOwner ? 'blur-[2px] scale-90 select-none' : ''}`}
                   referrerPolicy="no-referrer"
                 />
+                {!isOwner && (
+                  <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center">
+                    <Lock size={16} className="text-slate-700/80 drop-shadow-sm stroke-[2.5]" />
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -277,41 +323,235 @@ export default function Sidebar({
             </div>
 
             {/* Inputs & Actions */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                {/* Custom File Upload Button */}
-                <label className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-sans font-bold text-[9px] uppercase tracking-wider py-2 px-3 rounded-xl border border-indigo-150 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
-                  <Upload size={12} />
-                  <span>Fazer Upload</span>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleLogoUpload} 
-                    className="hidden" 
-                  />
-                </label>
+            {isOwner ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  {/* Custom File Upload Button */}
+                  <label className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-sans font-bold text-[9px] uppercase tracking-wider py-2 px-3 rounded-xl border border-indigo-150 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                    <Upload size={12} />
+                    <span>Fazer Upload</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleLogoUpload} 
+                      className="hidden" 
+                    />
+                  </label>
 
-                {/* Reset button only if non-default custom logo is active */}
-                {appLogo !== brandLogo && (
-                  <button
-                    onClick={handleResetLogo}
-                    className="bg-slate-100 hover:bg-slate-250 text-slate-600 font-sans font-bold text-[9px] uppercase tracking-wider py-2 px-3 rounded-xl border border-slate-205 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                    title="Restaurar Logo Brutalista Oficial"
-                  >
-                    <RefreshCw size={11} />
-                    <span>Redefinir</span>
-                  </button>
+                  {/* Reset button only if non-default custom logo is active */}
+                  {appLogo !== brandLogo && (
+                    <button
+                      onClick={handleResetLogo}
+                      className="bg-slate-100 hover:bg-slate-250 text-slate-600 font-sans font-bold text-[9px] uppercase tracking-wider py-2 px-3 rounded-xl border border-slate-205 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                      title="Restaurar Logo Brutalista Oficial"
+                    >
+                      <RefreshCw size={11} />
+                      <span>Redefinir</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between mt-1">
+                  {logoSuccessMsg ? (
+                    <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-wider animate-pulse">
+                      Ícone Atualizado com Sucesso!
+                    </span>
+                  ) : (
+                    <span className="text-[7.5px] text-slate-400 font-bold uppercase tracking-wide">
+                      Acesso Liberado • {isAutoOwner ? 'Sessão Dono' : 'Sessão Desbloqueada'}
+                    </span>
+                  )}
+                  {isIdentityUnlocked && !isAutoOwner && (
+                    <button
+                      onClick={() => {
+                        setIsIdentityUnlocked(false);
+                        localStorage.removeItem('split_identity_unlocked');
+                      }}
+                      className="text-[7.5px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wide cursor-pointer hover:underline"
+                    >
+                      Bloquear App
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-amber-50/50 border border-amber-200/50 p-2.5 rounded-xl flex flex-col gap-2 items-center text-center">
+                <span className="font-sans text-[8px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1 justify-center">
+                  <Lock size={10} className="stroke-[2.5]" />
+                  Apenas para o Dono do App
+                </span>
+                <p className="text-[7.5px] text-slate-500 font-medium uppercase leading-normal">
+                  Este recurso é protegido. Ative o perfil proprietário ou use o PIN do App.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnlockError('');
+                    setUnlockInput('');
+                    setShowUnlockModal(true);
+                  }}
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-sans font-extrabold text-[8px] uppercase tracking-wide px-3 py-1.5 rounded-lg transform active:scale-95 transition-all shadow-xs cursor-pointer flex items-center gap-1 justify-center"
+                >
+                  <KeyRound size={10} />
+                  <span>Configurar / Desbloquear</span>
+                </button>
+              </div>
+            )}
+
+
+          </div>
+
+          {/* DYNAMIC EXCHANGE CONTROL (If Comanda is open, protected for owners ONLY) */}
+          <div className="p-4 bg-amber-50/20 border border-amber-200/60 rounded-2xl flex flex-col gap-3 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-amber-200/40 pb-2">
+              <div className="flex items-center gap-2">
+                <Coins size={15} className="text-indigo-650 shrink-0" />
+                <span className="font-sans text-[10px] font-bold text-slate-700 uppercase tracking-widest leading-none">
+                  Moeda & Câmbio da Comanda
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {isOwner ? (
+                  <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 text-[6.5px] font-black uppercase px-1 py-0.5 rounded flex items-center gap-0.5" title="Acesso liberado para o dono">
+                    <Unlock size={8} strokeWidth={3} />
+                    Liberado
+                  </span>
+                ) : (
+                  <span className="bg-amber-55 text-amber-800 text-[6.5px] font-extrabold uppercase px-1 py-0.5 border border-amber-200 rounded flex items-center gap-0.5 animate-pulse" title="Acesso restrito ao dono">
+                    <Lock size={8} strokeWidth={3} />
+                    Protegido
+                  </span>
                 )}
               </div>
-
-              {logoSuccessMsg && (
-                <div className="text-center py-0.5 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-600 font-sans text-[8.5px] font-bold uppercase tracking-wider animate-pulse">
-                  Ícone Atualizado com Sucesso!
-                </div>
-              )}
             </div>
 
+            {!isOwner ? (
+              <div className="bg-amber-50/10 border border-amber-200/30 p-2.5 rounded-xl flex flex-col gap-1.5 items-center text-center">
+                <p className="text-[8px] text-amber-800 font-extrabold uppercase tracking-wide">
+                  Configuração Exclusiva do Dono
+                </p>
+                <p className="text-[7.5px] text-slate-500 font-medium uppercase leading-normal">
+                  Por questões de segurança, apenas o proprietário do aplicativo ou administradores autorizados com PIN de segurança podem alterar taxas cambiais e moedas.
+                </p>
+              </div>
+            ) : !activeComanda ? (
+              <div className="p-2 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <p className="text-[8.5px] text-slate-450 font-bold uppercase tracking-wider">
+                  Nenhuma comanda em edição no momento
+                </p>
+                <p className="text-[7.5px] text-slate-400 font-medium uppercase leading-normal mt-0.5">
+                  Abra uma comanda clicando nela para editar suas taxas.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Selector dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-sans text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                    Moeda Original
+                  </label>
+                  <select
+                    value={activeComanda.currency || 'BRL'}
+                    onChange={(e) => {
+                      const nextCurr = e.target.value;
+                      const nextRate = CURRENCIES[nextCurr]?.defaultRate || 1.0;
+                      onUpdateComanda({
+                        ...activeComanda,
+                        currency: nextCurr,
+                        exchangeRate: nextRate
+                      });
+                      setIsExchangeUpdated(true);
+                      setTimeout(() => setIsExchangeUpdated(false), 2000);
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-705 focus:outline-none focus:border-amber-450 focus:ring-1"
+                  >
+                    {Object.values(CURRENCIES).map(curr => (
+                      <option key={curr.code} value={curr.code}>
+                        {curr.name} ({curr.symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
+                {/* Rate edit (if non-BRL) */}
+                {(activeComanda.currency || 'BRL') !== 'BRL' && (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="font-sans text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                        Taxa de Câmbio em Real
+                      </label>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const currentCurr = activeComanda.currency || 'USD';
+                          const originalDefault = CURRENCIES[currentCurr]?.defaultRate || 1.0;
+                          onUpdateComanda({
+                            ...activeComanda,
+                            exchangeRate: originalDefault
+                          });
+                          setIsExchangeUpdated(true);
+                          setTimeout(() => setIsExchangeUpdated(false), 2000);
+                        }}
+                        className="text-[8px] text-amber-600 hover:text-amber-800 hover:underline font-bold uppercase cursor-pointer"
+                      >
+                        Restaurar Padrão
+                      </button>
+                    </div>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-[10px] font-bold text-slate-400">R$</span>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        min="0.0001"
+                        value={activeComanda.exchangeRate || 1.0}
+                        onChange={(e) => {
+                          const nextRate = parseFloat(e.target.value) || 1.0;
+                          onUpdateComanda({
+                            ...activeComanda,
+                            exchangeRate: nextRate
+                          });
+                        }}
+                        className="w-full bg-white border border-slate-205 rounded-xl pl-9 pr-2.5 py-1.5 text-xs font-mono font-bold text-slate-750 focus:outline-none focus:border-amber-450"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Auto identify */}
+                <div className="pt-2 border-t border-amber-200/40 flex items-center justify-between gap-1">
+                  <span className="text-[9px] font-bold text-amber-850 uppercase truncate">
+                    {(activeComanda.currency || 'BRL') === 'BRL'
+                      ? 'Comanda em BRL no Brasil.'
+                      : `Câmbio: R$ ${(activeComanda.exchangeRate || 1.0).toFixed(2).replace('.', ',')}`
+                    }
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const identified = identifyCurrency(activeComanda.name);
+                      const defaultRate = CURRENCIES[identified]?.defaultRate || 1.0;
+                      onUpdateComanda({
+                        ...activeComanda,
+                        currency: identified,
+                        exchangeRate: defaultRate
+                      });
+                      setIsExchangeUpdated(true);
+                      setTimeout(() => setIsExchangeUpdated(false), 2000);
+                    }}
+                    className="bg-white hover:bg-amber-50/30 border border-amber-300 text-amber-700 text-[8.5px] font-sans font-extrabold uppercase px-2 py-1 rounded-lg tracking-wider cursor-pointer shadow-xs transition-all active:scale-95 shrink-0"
+                    title="Analisar nome do estabelecimento para atualizar moeda"
+                  >
+                    Auto-Identificar
+                  </button>
+                </div>
+
+                {isExchangeUpdated && (
+                  <span className="text-[8px] text-emerald-600 font-bold uppercase text-center tracking-wide block animate-fade-in -mt-1">
+                    Taxa Atualizada na Comanda!
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Banner de Sucesso para Perfil ou câmbio */}
@@ -322,123 +562,7 @@ export default function Sidebar({
             </div>
           )}
 
-          {/* DYNAMIC EXCHANGE CONTROL (If Comanda is open) */}
-          {activeComanda && onUpdateComanda && (
-            <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl flex flex-col gap-3 shadow-xs">
-              <div className="flex items-center gap-2 border-b border-indigo-100/50 pb-2">
-                <Coins size={15} className="text-indigo-600 shrink-0" />
-                <span className="font-sans text-[10px] font-bold text-indigo-805 uppercase tracking-widest leading-none">
-                  Moeda & Câmbio da Comanda
-                </span>
-              </div>
 
-              {/* Selector dropdown */}
-              <div className="flex flex-col gap-1.5">
-                <label className="font-sans text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  Moeda Original
-                </label>
-                <select
-                  value={activeComanda.currency || 'BRL'}
-                  onChange={(e) => {
-                    const nextCurr = e.target.value;
-                    const nextRate = CURRENCIES[nextCurr]?.defaultRate || 1.0;
-                    onUpdateComanda({
-                      ...activeComanda,
-                      currency: nextCurr,
-                      exchangeRate: nextRate
-                    });
-                    setIsExchangeUpdated(true);
-                    setTimeout(() => setIsExchangeUpdated(false), 2000);
-                  }}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-705 focus:outline-none focus:border-indigo-500"
-                >
-                  {Object.values(CURRENCIES).map(curr => (
-                    <option key={curr.code} value={curr.code}>
-                      {curr.name} ({curr.symbol})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Rate edit (if non-BRL) */}
-              {(activeComanda.currency || 'BRL') !== 'BRL' && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="font-sans text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                      Taxa de Câmbio em Real
-                    </label>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const currentCurr = activeComanda.currency || 'USD';
-                        const originalDefault = CURRENCIES[currentCurr]?.defaultRate || 1.0;
-                        onUpdateComanda({
-                          ...activeComanda,
-                          exchangeRate: originalDefault
-                        });
-                        setIsExchangeUpdated(true);
-                        setTimeout(() => setIsExchangeUpdated(false), 2000);
-                      }}
-                      className="text-[8px] text-indigo-600 hover:underline font-bold uppercase cursor-pointer"
-                    >
-                      Restaurar Padrão
-                    </button>
-                  </div>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-[10px] font-bold text-slate-400">R$</span>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      min="0.0001"
-                      value={activeComanda.exchangeRate || 1.0}
-                      onChange={(e) => {
-                        const nextRate = parseFloat(e.target.value) || 1.0;
-                        onUpdateComanda({
-                          ...activeComanda,
-                          exchangeRate: nextRate
-                        });
-                      }}
-                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-2.5 py-1.5 text-xs font-mono font-bold text-slate-750 focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Auto identify */}
-              <div className="pt-2 border-t border-indigo-100/40 flex items-center justify-between">
-                <span className="text-[9px] font-semibold text-indigo-700 uppercase">
-                  {(activeComanda.currency || 'BRL') === 'BRL'
-                    ? 'Comanda em BRL no Brasil.'
-                    : `Câmbio: R$ ${(activeComanda.exchangeRate || 1.0).toFixed(2).replace('.', ',')}`
-                  }
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const identified = identifyCurrency(activeComanda.name);
-                    const defaultRate = CURRENCIES[identified]?.defaultRate || 1.0;
-                    onUpdateComanda({
-                      ...activeComanda,
-                      currency: identified,
-                      exchangeRate: defaultRate
-                    });
-                    setIsExchangeUpdated(true);
-                    setTimeout(() => setIsExchangeUpdated(false), 2000);
-                  }}
-                  className="bg-white hover:bg-slate-50 border border-indigo-250 text-indigo-600 text-[8px] font-sans font-extrabold uppercase px-2.5 py-1.5 rounded-lg tracking-wider cursor-pointer shadow-xs transition-all active:scale-95"
-                  title="Analisar nome do estabelecimento para atualizar moeda"
-                >
-                  Auto-Identificar
-                </button>
-              </div>
-
-              {isExchangeUpdated && (
-                <span className="text-[8px] text-emerald-600 font-bold uppercase text-center tracking-wide block animate-fade-in -mt-1">
-                  Taxa Atualizada na Comanda!
-                </span>
-              )}
-            </div>
-          )}
 
           {/* PERFIL SECTION */}
           <div className="space-y-4">
@@ -686,6 +810,84 @@ export default function Sidebar({
                 Voltar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Identity Unlock Verification Modal */}
+      {showUnlockModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
+          <div className="w-full max-w-[325px] bg-white border border-slate-200 rounded-3xl shadow-elegant-lg p-5 flex flex-col gap-4 animate-scale-up">
+            <div className="size-11 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 mx-auto">
+              <Lock size={18} className="stroke-[2.5]" />
+            </div>
+            
+            <div className="text-center">
+              <h3 className="font-sans font-black text-sm text-slate-900 uppercase">
+                Verificar Proprietário
+              </h3>
+              <p className="text-[9px] text-slate-400 uppercase tracking-wide leading-normal mt-1">
+                Apenas o principal ou dono do app pode modificar a imagem da identidade visual do app.
+              </p>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const input = unlockInput.trim().toLowerCase();
+              if (input === '1234' || input === 'erariodigital@gmail.com') {
+                setIsIdentityUnlocked(true);
+                localStorage.setItem('split_identity_unlocked', 'true');
+                setShowUnlockModal(false);
+                setUnlockInput('');
+                setUnlockError('');
+              } else {
+                setUnlockError('Acesso negado: PIN ou E-mail incorreto.');
+              }
+            }} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-sans text-[8.5px] font-bold text-slate-400 uppercase tracking-wider text-left">
+                  Insira o PIN (1234) ou seu E-mail
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={unlockInput}
+                  onChange={(e) => {
+                    setUnlockInput(e.target.value);
+                    setUnlockError('');
+                  }}
+                  placeholder="E-mail ou PIN"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 text-center font-sans text-xs font-bold uppercase focus:outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-100 transition-all text-slate-705"
+                  autoFocus
+                />
+              </div>
+
+              {unlockError && (
+                <div className="text-center text-[8px] font-extrabold text-red-650 uppercase bg-red-50 border border-red-150 p-1.5 rounded-lg animate-pulse">
+                  {unlockError}
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl font-sans font-bold text-[10px] uppercase tracking-wider cursor-pointer active:scale-95 transition-all text-center"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnlockModal(false);
+                    setUnlockInput('');
+                    setUnlockError('');
+                  }}
+                  className="flex-1 border border-slate-200 bg-white text-slate-600 py-2.5 rounded-xl font-sans font-bold text-[10px] uppercase hover:bg-slate-50 active:scale-95 cursor-pointer transition-all text-center"
+                >
+                  Voltar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
