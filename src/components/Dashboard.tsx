@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Comanda, Friend } from '../types';
-import { LayoutDashboard, TrendingUp, Users, DollarSign, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Users, DollarSign, ArrowLeft, Share2, Check } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 interface CustomTooltipProps {
@@ -32,10 +32,55 @@ interface DashboardProps {
   comandas: Comanda[];
   friends: Friend[];
   onBackToHome?: () => void;
+  isSharedMode?: boolean;
 }
 
-export default function Dashboard({ comandas, friends, onBackToHome }: DashboardProps) {
-  const [activeMonthFilter, setActiveMonthFilter] = useState<string>('todos');
+export default function Dashboard({ comandas, friends, onBackToHome, isSharedMode = false }: DashboardProps) {
+  const [activeMonthFilter] = useState<string>('todos');
+  const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
+  const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+
+  const handleCopySharedLink = () => {
+    let base = window.location.origin + window.location.pathname;
+    
+    // Check if the origin/hostname is a Google AI Studio parent frame domain
+    if (
+      window.location.hostname.includes('google.com') || 
+      window.location.hostname.includes('aistudio') || 
+      window.location.hostname === ''
+    ) {
+      try {
+        if (document.referrer && !document.referrer.includes('google.com') && !document.referrer.includes('aistudio')) {
+          const refUrl = new URL(document.referrer);
+          base = refUrl.origin + refUrl.pathname;
+        } else {
+          base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+        }
+      } catch (_) {
+        base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+      }
+    }
+    
+    if (base.endsWith('index.html')) {
+      base = base.substring(0, base.length - 10);
+    }
+    if (!base.endsWith('/')) {
+      base += '/';
+    }
+    
+    const expiraTimestamp = Date.now() + linkExpiryHrs * 3600000;
+    const sharedUrl = `${base}?modo=dashboard&expira=${expiraTimestamp}`;
+    
+    navigator.clipboard.writeText(sharedUrl)
+      .then(() => {
+        setShareToastMessage('LINK DO DASHBOARD COPIADO COM SUCESSO!');
+        setTimeout(() => setShareToastMessage(null), 3000);
+      })
+      .catch(() => {
+        setShareToastMessage('ERRO AO COPIAR LINK');
+        setTimeout(() => setShareToastMessage(null), 3000);
+      });
+  };
 
   // Dynamically extract unique months
   const availableMonths = Array.from(
@@ -162,8 +207,8 @@ export default function Dashboard({ comandas, friends, onBackToHome }: Dashboard
 
       {/* Header */}
       <nav className="sticky top-0 z-20 flex flex-col bg-white border-b border-slate-200/80 shadow-xs">
-        <div className="flex items-center p-6 pb-2 gap-3 justify-between">
-          {onBackToHome && (
+        <div className="flex items-center p-6 pb-6 gap-3 justify-between">
+          {!isSharedMode && onBackToHome && (
             <button 
               onClick={onBackToHome}
               className="flex items-center justify-center size-8 border border-slate-200 bg-slate-50 text-slate-600 rounded-lg shadow-xs cursor-pointer hover:bg-slate-100 active:scale-95 transition-all"
@@ -173,35 +218,21 @@ export default function Dashboard({ comandas, friends, onBackToHome }: Dashboard
             </button>
           )}
           <h2 className="text-slate-900 text-xl font-sans font-bold leading-none tracking-tight flex-1 uppercase">
-            Dashboard
+            DASHBOARD SPLIT
           </h2>
+          {isSharedMode && (
+            <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200/50 text-emerald-800 rounded-lg px-2.5 py-1 text-[7.5px] font-sans font-extrabold uppercase tracking-wider select-none shrink-0 mr-1 animate-pulse">
+              <span>● Integrante (Leitura)</span>
+            </div>
+          )}
           <div className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 shadow-xs">
             <LayoutDashboard size={13} className="text-slate-400" />
-          </div>
-        </div>
-
-        {/* Filter Scrollbar segment */}
-        <div className="flex gap-2 px-6 pb-4 pt-2">
-          <div className="flex-1 flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/50 rounded-xl px-3 py-1.5 shadow-xs">
-            <span className="font-sans text-[9px] font-extrabold uppercase tracking-wider text-indigo-700">MÊS:</span>
-            <select
-              value={activeMonthFilter}
-              onChange={(e) => setActiveMonthFilter(e.target.value)}
-              className="bg-transparent text-indigo-900 font-sans text-[10px] font-bold uppercase border-none focus:outline-none focus:ring-0 p-0 cursor-pointer text-left leading-none"
-            >
-              <option value="todos">Todos</option>
-              {availableMonths.map(mNo => (
-                <option key={mNo} value={mNo}>
-                  {getMonthNamePT(mNo)}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </nav>
 
       {/* Main content */}
-      <main className="flex-1 w-full px-6 pt-6 pb-24 z-10 relative overflow-y-auto no-scrollbar">
+      <main className="flex-1 w-full px-6 pt-6 pb-28 z-10 relative overflow-y-auto no-scrollbar">
         
         {/* Bento Stats Cards */}
         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -329,6 +360,46 @@ export default function Dashboard({ comandas, friends, onBackToHome }: Dashboard
           )}
         </div>
       </main>
+
+      {/* Floating Share Link segment */}
+      {!isSharedMode && (
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent z-25 pb-5 flex flex-col items-center">
+          <div className="mb-2 flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-1 text-[8px] font-bold uppercase tracking-wider">
+            <span className="text-slate-400 ml-1">EXPIRAÇÃO DO LINK:</span>
+            <select
+              value={linkExpiryHrs}
+              onChange={(e) => setLinkExpiryHrs(Number(e.target.value))}
+              className="bg-transparent text-slate-800 font-bold uppercase outline-none border-none p-0 focus:ring-0 leading-none text-[8.5px] cursor-pointer"
+            >
+              <option value={1}>1 Hora</option>
+              <option value={2}>2 Horas</option>
+              <option value={6}>6 Horas</option>
+              <option value={24}>24 Horas</option>
+            </select>
+          </div>
+
+          <button 
+            onClick={handleCopySharedLink}
+            className="w-full max-w-xs bg-emerald-600 text-white py-3 rounded-xl shadow-lg shadow-emerald-600/10 font-sans font-bold text-[10.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-emerald-700 transition-all active:scale-[0.99] cursor-pointer"
+            title="Copiar link de acesso temporário para a dashboard em modo leitura"
+          >
+            <Share2 size={13} className="text-white" />
+            <span>LINK ACESSO DASHBOARD</span>
+          </button>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {shareToastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-800 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 z-55 animate-fade-in">
+          <div className="size-5 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0">
+            <Check size={11} strokeWidth={3} />
+          </div>
+          <span className="font-sans text-[10px] font-extrabold uppercase tracking-wider text-slate-100">
+            {shareToastMessage}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

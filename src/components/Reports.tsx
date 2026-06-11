@@ -19,6 +19,7 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
   const [activeFriendFilter, setActiveFriendFilter] = useState<string>('todos'); // 'todos', or friendId
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
   const [activePaymentFilter, setActivePaymentFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
+  const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
 
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -54,8 +55,9 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
       base += '/';
     }
     
-    // Construct final URL
-    const sharedUrl = base + "?modo=relatorio";
+    // Construct final URL with expiration
+    const expiraTimestamp = Date.now() + linkExpiryHrs * 3600000;
+    const sharedUrl = `${base}?modo=relatorio&expira=${expiraTimestamp}`;
     
     navigator.clipboard.writeText(sharedUrl)
       .then(() => {
@@ -353,7 +355,7 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
             </button>
           )}
           <h2 className="text-slate-900 text-xl font-sans font-bold leading-none tracking-tight flex-1 uppercase">
-            Relatórios
+            RELATORIO SPLIT
           </h2>
           {isSharedMode && (
             <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200/50 text-emerald-800 rounded-lg px-2.5 py-1 text-[7.5px] font-sans font-extrabold uppercase tracking-wider select-none shrink-0 mr-1 animate-pulse">
@@ -535,6 +537,22 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
         {filteredComandas.length > 0 && (
           <div className="mb-2 px-3 py-1 bg-slate-900 text-white text-[9px] font-bold uppercase tracking-widest rounded-lg shadow-sm">
             SOMA FILTRADA: <strong className="text-indigo-400 font-extrabold">R$ {totalFilteredValue.toFixed(2).replace('.', ',')}</strong>
+          </div>
+        )}
+
+        {!isSharedMode && (
+          <div className="mb-2 flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-lg p-1 text-[8px] font-bold uppercase tracking-wider">
+            <span className="text-slate-450 ml-1">EXPIRAÇÃO DO LINK:</span>
+            <select
+              value={linkExpiryHrs}
+              onChange={(e) => setLinkExpiryHrs(Number(e.target.value))}
+              className="bg-transparent text-slate-800 font-bold uppercase outline-none border-none p-0 focus:ring-0 leading-none text-[8.5px] cursor-pointer"
+            >
+              <option value={1}>1 Hora</option>
+              <option value={2}>2 Horas</option>
+              <option value={6}>6 Horas</option>
+              <option value={24}>24 Horas</option>
+            </select>
           </div>
         )}
 

@@ -78,10 +78,47 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   
   // Shared access mode check from URL
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const parsedModo = searchParams?.get('modo');
+  const parsedExpira = searchParams?.get('expira');
+  
   const isSharedMode = typeof window !== 'undefined' && (
-    window.location.search.includes('modo=relatorio') || 
+    parsedModo === 'relatorio' || 
+    parsedModo === 'dashboard' ||
     window.location.search.includes('shared=true')
   );
+
+  const [isExpired, setIsExpired] = useState<boolean>(false);
+  const [timeRemainingStr, setTimeRemainingStr] = useState<string>('');
+
+  useEffect(() => {
+    if (parsedExpira) {
+      const expirationTime = Number(parsedExpira);
+      if (isNaN(expirationTime)) return;
+
+      const updateTimer = () => {
+        const now = Date.now();
+        const diff = expirationTime - now;
+        if (diff <= 0) {
+          setIsExpired(true);
+          setTimeRemainingStr('EXPIRADO');
+        } else {
+          setIsExpired(false);
+          const totalSeconds = Math.floor(diff / 1000);
+          const hours = Math.floor(totalSeconds / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          
+          const pad = (num: number) => String(num).padStart(2, '0');
+          setTimeRemainingStr(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+        }
+      };
+
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [parsedExpira]);
 
   const [isIdentityUnlocked, setIsIdentityUnlocked] = useState(() => {
     return localStorage.getItem('split_identity_unlocked') === 'true';
@@ -174,6 +211,52 @@ export default function App() {
   // Render the appropriate component
   const renderScreen = () => {
     if (isSharedMode) {
+      if (isExpired) {
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 relative select-none h-full">
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center opacity-[0.01]">
+              <div className="text-[6rem] font-sans font-extrabold text-slate-900 rotate-[-25deg] whitespace-nowrap uppercase tracking-widest">
+                Acesso Expirado
+              </div>
+            </div>
+            
+            <div className="z-10 bg-white border border-slate-200 p-8 rounded-3xl shadow-elegant max-w-sm w-full flex flex-col items-center">
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-5 shadow-sm">
+                <span className="text-2xl">⏳</span>
+              </div>
+              
+              <h2 className="text-slate-950 font-sans font-black text-sm uppercase tracking-wider mb-2">
+                Acesso Temporário Expirado
+              </h2>
+              <p className="text-[10.5px] text-slate-400 font-bold uppercase tracking-wider mb-6 leading-relaxed">
+                Este link de leitura temporário expirou devido ao limite de tempo definido pelo organizador. Solicite um novo link de acesso para continuar.
+              </p>
+              
+              <div className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3.5 text-left font-sans text-[8.5px] font-bold text-slate-400 uppercase tracking-widest space-y-1">
+                <div className="flex justify-between">
+                  <span>Status do Link:</span>
+                  <span className="text-rose-500 font-extrabold">Expirado</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Hora Atual:</span>
+                  <span className="text-slate-750 font-mono text-[9px]">{new Date().toLocaleTimeString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (parsedModo === 'dashboard') {
+        return (
+          <Dashboard
+            comandas={comandas}
+            friends={friends}
+            isSharedMode={true}
+          />
+        );
+      }
+
       return (
         <Reports
           comandas={comandas}
@@ -247,6 +330,15 @@ export default function App() {
         
         {/* Render actual active frame flow */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {isSharedMode && parsedExpira && !isExpired && (
+            <div className="bg-amber-500 border-b border-amber-600 text-slate-950 px-4 py-2 text-center text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1.5 shrink-0 select-none">
+              <span>⏱️</span>
+              <span>O LINK DE ACESSO EXPIRA EM:</span>
+              <span className="bg-slate-900 text-white rounded px-2 py-0.5 font-mono text-[10px] font-black tracking-normal">
+                {timeRemainingStr}
+              </span>
+            </div>
+          )}
           {renderScreen()}
         </div>
 
