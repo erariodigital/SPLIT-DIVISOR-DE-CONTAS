@@ -262,12 +262,12 @@ export default function Sidebar({
             
             <div className="w-20 h-20 rounded-full border-2 border-[#b28623]/60 bg-gradient-to-br from-[#271a06] to-[#120a01] p-0.5 flex items-center justify-center shadow-lg shadow-amber-955/40 overflow-hidden shrink-0 relative transition-transform hover:scale-105 duration-300">
               <img 
-                src={appLogo} 
+                src={appLogo || '/logo.png'} 
                 alt="Logo Split" 
                 className="size-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  e.currentTarget.src = 'logo.png';
+                  e.currentTarget.src = '/logo.png';
                 }}
               />
             </div>
@@ -310,12 +310,12 @@ export default function Sidebar({
               {/* Actual Image Source representation */}
               <div className="size-16 rounded-2xl bg-white border border-slate-300 flex items-center justify-center shadow-md overflow-hidden shrink-0 group relative">
                 <img 
-                  src={appLogo} 
+                  src={appLogo || '/logo.png'} 
                   alt="Logo Split" 
                   className={`size-full object-cover rounded-2xl transition-all duration-300 ${!isOwner ? 'blur-[2px] scale-90 select-none' : ''}`}
                   referrerPolicy="no-referrer"
                   onError={(e) => {
-                    e.currentTarget.src = 'logo.png';
+                    e.currentTarget.src = '/logo.png';
                   }}
                 />
                 {!isOwner && (

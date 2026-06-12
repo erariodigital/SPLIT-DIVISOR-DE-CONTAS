@@ -634,10 +634,13 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
                   <div className="flex justify-center mb-3">
                     <div className="size-12 rounded-2xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center overflow-hidden shadow-md">
                       <img 
-                        src={appLogo} 
+                        src={appLogo || '/logo.png'} 
                         alt="Logo APP" 
                         className="size-full object-cover"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.src = '/logo.png';
+                        }}
                       />
                     </div>
                   </div>

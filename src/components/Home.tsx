@@ -118,12 +118,12 @@ export default function Home({
           {/* Miniature Branded Gold Coin Logo Tag */}
           <div className="size-9 rounded-xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center shrink-0 shadow-md shadow-amber-955/20 overflow-hidden relative">
             <img 
-              src={appLogo} 
+              src={appLogo || '/logo.png'} 
               alt="Logo Split" 
               className="size-full object-cover"
               referrerPolicy="no-referrer"
               onError={(e) => {
-                e.currentTarget.src = 'logo.png';
+                e.currentTarget.src = '/logo.png';
               }}
             />
           </div>
