@@ -54,7 +54,14 @@ export default function Sidebar({
   
   // Custom Dynamic persist logo states
   const [appLogo, setAppLogo] = useState<string>(() => {
-    return localStorage.getItem('split_custom_app_logo') || brandLogo;
+    const stored = localStorage.getItem('split_custom_app_logo');
+    if (stored && stored.startsWith('data:image/')) {
+      return stored;
+    }
+    if (stored) {
+      localStorage.removeItem('split_custom_app_logo');
+    }
+    return brandLogo;
   });
   const [logoSuccessMsg, setLogoSuccessMsg] = useState(false);
 
@@ -259,6 +266,9 @@ export default function Sidebar({
                 alt="Logo Split" 
                 className="size-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.src = 'logo.png';
+                }}
               />
             </div>
             
@@ -304,6 +314,9 @@ export default function Sidebar({
                   alt="Logo Split" 
                   className={`size-full object-cover rounded-2xl transition-all duration-300 ${!isOwner ? 'blur-[2px] scale-90 select-none' : ''}`}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.src = 'logo.png';
+                  }}
                 />
                 {!isOwner && (
                   <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center">

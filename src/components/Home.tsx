@@ -32,12 +32,27 @@ export default function Home({
 
   // Dynamic persistent custom logo state (User Identity)
   const [appLogo, setAppLogo] = useState<string>(() => {
-    return localStorage.getItem('split_custom_app_logo') || brandLogo;
+    const stored = localStorage.getItem('split_custom_app_logo');
+    if (stored && stored.startsWith('data:image/')) {
+      return stored;
+    }
+    if (stored) {
+      localStorage.removeItem('split_custom_app_logo');
+    }
+    return brandLogo;
   });
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setAppLogo(localStorage.getItem('split_custom_app_logo') || brandLogo);
+      const stored = localStorage.getItem('split_custom_app_logo');
+      if (stored && stored.startsWith('data:image/')) {
+        setAppLogo(stored);
+      } else {
+        if (stored) {
+          localStorage.removeItem('split_custom_app_logo');
+        }
+        setAppLogo(brandLogo);
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
@@ -107,6 +122,9 @@ export default function Home({
               alt="Logo Split" 
               className="size-full object-cover"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = 'logo.png';
+              }}
             />
           </div>
 
