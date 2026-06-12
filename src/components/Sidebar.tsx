@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, Comanda } from '../types';
 import { X, Save, AlertTriangle, Check, ShieldAlert, Coins, Plus, Trash2, QrCode, Phone, Mail, Upload, Smartphone, Sparkles, RefreshCw, Lock, Unlock, KeyRound } from 'lucide-react';
 import { CURRENCIES, identifyCurrency } from '../utils/currency';
-import brandLogo from '../assets/images/split_brutalist_logo_1781082679930.png';
+import brandLogo from '../assets/images/split_logo_processed.png';
 
 interface SidebarProps {
   isOpen: boolean;

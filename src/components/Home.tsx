@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Comanda, Friend } from '../types';
 import { Plus, Search, FileText, Menu } from 'lucide-react';
 import { CURRENCIES } from '../utils/currency';
-import brandLogo from '../assets/images/split_brutalist_logo_1781082679930.png';
+import brandLogo from '../assets/images/split_logo_processed.png';
 
 interface HomeProps {
   comandas: Comanda[];
