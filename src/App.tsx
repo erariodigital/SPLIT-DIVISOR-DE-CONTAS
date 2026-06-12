@@ -14,8 +14,42 @@ import Sidebar from './components/Sidebar';
 import { Receipt, FileText, LayoutDashboard } from 'lucide-react';
 
 export default function App() {
+  // UTF-8 Base64 Decoding Helper to read shared state in the access link
+  const decodeSharedData = (base64Str: string) => {
+    try {
+      const decodedCharBytes = atob(base64Str).split('').map((c) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('');
+      const decodedStr = decodeURIComponent(decodedCharBytes);
+      const parsed = JSON.parse(decodedStr);
+      if (parsed && Array.isArray(parsed.comandas)) {
+        return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse shared URL state data:', e);
+    }
+    return null;
+  };
+
+  // Shared access mode validation & custom URL parsing block
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const parsedModo = searchParams?.get('modo');
+  const parsedExpira = searchParams?.get('expira');
+  const parsedData = searchParams?.get('data');
+  
+  const isSharedMode = typeof window !== 'undefined' && (
+    parsedModo === 'relatorio' || 
+    parsedModo === 'dashboard' ||
+    window.location.search.includes('shared=true')
+  );
+
+  const sharedData = isSharedMode && parsedData ? decodeSharedData(parsedData) : null;
+
   // Local storage state initialization hooks
   const [comandas, setComandas] = useState<Comanda[]>(() => {
+    if (isSharedMode && sharedData && Array.isArray(sharedData.comandas)) {
+      return sharedData.comandas;
+    }
     const saved = localStorage.getItem('split_comandas');
     if (saved) {
       try { return JSON.parse(saved); } catch { return INITIAL_COMANDAS; }
@@ -24,6 +58,9 @@ export default function App() {
   });
 
   const [profiles, setProfiles] = useState<UserProfile[]>(() => {
+    if (isSharedMode && sharedData && Array.isArray(sharedData.profiles)) {
+      return sharedData.profiles;
+    }
     const saved = localStorage.getItem('split_user_profiles');
     if (saved) {
       try {
@@ -76,17 +113,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'comandas' | 'relatorios' | 'dashboard'>('comandas');
   const [selectedComandaId, setSelectedComandaId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  
-  // Shared access mode check from URL
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const parsedModo = searchParams?.get('modo');
-  const parsedExpira = searchParams?.get('expira');
-  
-  const isSharedMode = typeof window !== 'undefined' && (
-    parsedModo === 'relatorio' || 
-    parsedModo === 'dashboard' ||
-    window.location.search.includes('shared=true')
-  );
 
   const [isExpired, setIsExpired] = useState<boolean>(false);
   const [timeRemainingStr, setTimeRemainingStr] = useState<string>('');
@@ -138,20 +164,28 @@ export default function App() {
   
   // Sync state changes with local storage securely
   useEffect(() => {
-    localStorage.setItem('split_comandas', JSON.stringify(comandas));
-  }, [comandas]);
+    if (!isSharedMode) {
+      localStorage.setItem('split_comandas', JSON.stringify(comandas));
+    }
+  }, [comandas, isSharedMode]);
 
   useEffect(() => {
-    localStorage.setItem('split_user_profiles', JSON.stringify(profiles));
-  }, [profiles]);
+    if (!isSharedMode) {
+      localStorage.setItem('split_user_profiles', JSON.stringify(profiles));
+    }
+  }, [profiles, isSharedMode]);
 
   useEffect(() => {
-    localStorage.setItem('split_active_profile_id', activeProfileId);
-  }, [activeProfileId]);
+    if (!isSharedMode) {
+      localStorage.setItem('split_active_profile_id', activeProfileId);
+    }
+  }, [activeProfileId, isSharedMode]);
 
   useEffect(() => {
-    localStorage.setItem('split_user_profile', JSON.stringify(userProfile));
-  }, [userProfile]);
+    if (!isSharedMode) {
+      localStorage.setItem('split_user_profile', JSON.stringify(userProfile));
+    }
+  }, [userProfile, isSharedMode]);
 
   // Handlers for state updates across components
   const handleUpdateComanda = (updated: Comanda) => {

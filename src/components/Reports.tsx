@@ -30,12 +30,24 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
     }
     return brandLogo;
   });
+  const [logoError, setLogoError] = useState(false);
 
   const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
 
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+
+  const utf8B64Encode = (str: string) => {
+    try {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+    } catch (e) {
+      console.error('Error encoding:', e);
+      return '';
+    }
+  };
 
   const handleCopySharedLink = () => {
     let base = window.location.origin + window.location.pathname;
@@ -59,6 +71,11 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
       }
     }
     
+    // Robust Host mapping: Map internal dev server urls to pre shared server urls
+    if (base.includes('ais-dev-')) {
+      base = base.replace('ais-dev-', 'ais-pre-');
+    }
+
     // Normalize suffix (avoid trailing index.html issues)
     if (base.endsWith('index.html')) {
       base = base.substring(0, base.length - 10);
@@ -67,9 +84,31 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
       base += '/';
     }
     
-    // Construct final URL with expiration
+    // Construct final URL with expiration and compressed active data payload!
     const expiraTimestamp = Date.now() + linkExpiryHrs * 3600000;
-    const sharedUrl = `${base}?modo=relatorio&expira=${expiraTimestamp}`;
+    
+    let dataParam = '';
+    try {
+      // Serialize current comandas and friends so the recipient loads identical state
+      const payload = {
+        comandas: comandas,
+        profiles: friends.map(f => ({
+          id: f.id,
+          name: f.name,
+          email: `${f.name.toLowerCase()}@email.com`,
+          pixKey: '',
+          phone: '',
+          avatar: f.avatar
+        }))
+      };
+      
+      const jsonStr = JSON.stringify(payload);
+      dataParam = `&data=${utf8B64Encode(jsonStr)}`;
+    } catch (err) {
+      console.error('Failed to bundle data payload for share link:', err);
+    }
+
+    const sharedUrl = `${base}?modo=relatorio${dataParam}&expira=${expiraTimestamp}`;
     
     navigator.clipboard.writeText(sharedUrl)
       .then(() => {
@@ -632,16 +671,22 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
                 <div className="text-center border-b-2 border-dashed border-slate-200 pb-4">
                   {/* Branded Centered Logo for Print */}
                   <div className="flex justify-center mb-3">
-                    <div className="size-12 rounded-2xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center overflow-hidden shadow-md">
-                      <img 
-                        src={appLogo || '/logo.png'} 
-                        alt="Logo APP" 
-                        className="size-full object-cover"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          e.currentTarget.src = '/logo.png';
-                        }}
-                      />
+                    <div className="size-12 rounded-2xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center overflow-hidden shadow-md select-none">
+                      {!logoError ? (
+                        <img 
+                          src={appLogo || '/logo.png'} 
+                          alt="Logo APP" 
+                          className="size-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={() => {
+                            setLogoError(true);
+                          }}
+                        />
+                      ) : (
+                        <span className="font-sans text-xs font-black text-[#b28623] tracking-widest pl-0.5">
+                          SP
+                        </span>
+                      )}
                     </div>
                   </div>
                   <h1 className="font-sans font-bold text-sm uppercase tracking-wider text-slate-950">SPLIT — DIVISOR DE CONTAS</h1>

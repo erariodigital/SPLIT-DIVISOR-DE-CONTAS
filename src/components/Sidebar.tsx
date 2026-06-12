@@ -64,6 +64,7 @@ export default function Sidebar({
     return brandLogo;
   });
   const [logoSuccessMsg, setLogoSuccessMsg] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   // Identity lock states for owner restriction
   const [isIdentityUnlocked, setIsIdentityUnlocked] = useState(() => {
@@ -95,6 +96,7 @@ export default function Sidebar({
         const base64String = reader.result as string;
         setAppLogo(base64String);
         localStorage.setItem('split_custom_app_logo', base64String);
+        setLogoError(false);
         dispatchStorageChange();
         setLogoSuccessMsg(true);
         setTimeout(() => setLogoSuccessMsg(false), 3000);
@@ -106,6 +108,7 @@ export default function Sidebar({
   const handleResetLogo = () => {
     setAppLogo(brandLogo);
     localStorage.removeItem('split_custom_app_logo');
+    setLogoError(false);
     dispatchStorageChange();
     setLogoSuccessMsg(true);
     setTimeout(() => setLogoSuccessMsg(false), 3000);
@@ -308,19 +311,25 @@ export default function Sidebar({
 
             <div className="flex items-center gap-3 relative">
               {/* Actual Image Source representation */}
-              <div className="size-16 rounded-2xl bg-white border border-slate-300 flex items-center justify-center shadow-md overflow-hidden shrink-0 group relative">
-                <img 
-                  src={appLogo || '/logo.png'} 
-                  alt="Logo Split" 
-                  className={`size-full object-cover rounded-2xl transition-all duration-300 ${!isOwner ? 'blur-[2px] scale-90 select-none' : ''}`}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.src = '/logo.png';
-                  }}
-                />
+              <div className="size-16 rounded-2xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center shadow-md overflow-hidden shrink-0 group relative select-none">
+                {!logoError ? (
+                  <img 
+                    src={appLogo || '/logo.png'} 
+                    alt="Logo Split" 
+                    className={`size-full object-cover rounded-2xl transition-all duration-300 ${!isOwner ? 'blur-[2px] scale-90' : ''}`}
+                    referrerPolicy="no-referrer"
+                    onError={() => {
+                      setLogoError(true);
+                    }}
+                  />
+                ) : (
+                  <span className="font-sans text-lg font-black text-[#b28623] tracking-widest pl-0.5">
+                    SPLIT
+                  </span>
+                )}
                 {!isOwner && (
-                  <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center">
-                    <Lock size={16} className="text-slate-700/80 drop-shadow-sm stroke-[2.5]" />
+                  <div className="absolute inset-0 bg-slate-900/15 flex items-center justify-center">
+                    <Lock size={16} className="text-amber-500/85 drop-shadow-sm stroke-[2.5]" />
                   </div>
                 )}
               </div>

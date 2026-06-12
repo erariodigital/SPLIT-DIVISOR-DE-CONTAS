@@ -41,17 +41,20 @@ export default function Home({
     }
     return brandLogo;
   });
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
       const stored = localStorage.getItem('split_custom_app_logo');
       if (stored && stored.startsWith('data:image/')) {
         setAppLogo(stored);
+        setLogoError(false);
       } else {
         if (stored) {
           localStorage.removeItem('split_custom_app_logo');
         }
         setAppLogo(brandLogo);
+        setLogoError(false);
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -116,16 +119,22 @@ export default function Home({
           )}
           
           {/* Miniature Branded Gold Coin Logo Tag */}
-          <div className="size-9 rounded-xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center shrink-0 shadow-md shadow-amber-955/20 overflow-hidden relative">
-            <img 
-              src={appLogo || '/logo.png'} 
-              alt="Logo Split" 
-              className="size-full object-cover"
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.currentTarget.src = '/logo.png';
-              }}
-            />
+          <div className="size-9 rounded-xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center shrink-0 shadow-md shadow-amber-955/20 overflow-hidden relative select-none">
+            {!logoError ? (
+              <img 
+                src={appLogo || '/logo.png'} 
+                alt="Logo Split" 
+                className="size-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={() => {
+                  setLogoError(true);
+                }}
+              />
+            ) : (
+              <span className="font-sans text-[11.5px] font-black text-[#b28623] tracking-widest pl-0.5">
+                SP
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-0.5 pr-1">

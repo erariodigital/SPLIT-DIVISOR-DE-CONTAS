@@ -40,6 +40,17 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
   const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
 
+  const utf8B64Encode = (str: string) => {
+    try {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+    } catch (e) {
+      console.error('Error encoding:', e);
+      return '';
+    }
+  };
+
   const handleCopySharedLink = () => {
     let base = window.location.origin + window.location.pathname;
     
@@ -61,6 +72,11 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
       }
     }
     
+    // Robust Host mapping: Map internal dev server urls to pre shared server urls
+    if (base.includes('ais-dev-')) {
+      base = base.replace('ais-dev-', 'ais-pre-');
+    }
+
     if (base.endsWith('index.html')) {
       base = base.substring(0, base.length - 10);
     }
@@ -69,7 +85,29 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
     }
     
     const expiraTimestamp = Date.now() + linkExpiryHrs * 3600000;
-    const sharedUrl = `${base}?modo=dashboard&expira=${expiraTimestamp}`;
+    
+    let dataParam = '';
+    try {
+      // Serialize current comandas and friends so the recipient loads identical state
+      const payload = {
+        comandas: comandas,
+        profiles: friends.map(f => ({
+          id: f.id,
+          name: f.name,
+          email: `${f.name.toLowerCase()}@email.com`,
+          pixKey: '',
+          phone: '',
+          avatar: f.avatar
+        }))
+      };
+      
+      const jsonStr = JSON.stringify(payload);
+      dataParam = `&data=${utf8B64Encode(jsonStr)}`;
+    } catch (err) {
+      console.error('Failed to bundle data payload for dashboard link:', err);
+    }
+
+    const sharedUrl = `${base}?modo=dashboard${dataParam}&expira=${expiraTimestamp}`;
     
     navigator.clipboard.writeText(sharedUrl)
       .then(() => {
