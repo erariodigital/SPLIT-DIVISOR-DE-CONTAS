@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: '/SPLIT-DIVISOR-DE-CONTAS/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
