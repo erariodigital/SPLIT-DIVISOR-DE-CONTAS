@@ -45,3 +45,72 @@
 .animate-infinite-loading {
   animation: infinite-loading 1.6s infinite linear;
 }
+
+/* Print styles to only print the specific report area */
+@media print {
+  /* Hide all elements by default */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Show only the print area and its children */
+  #print-area-id, #print-area-id * {
+    visibility: visible !important;
+  }
+  
+  /* Reset background and layout for proper page printing */
+  html, body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  /* Ensure parent modal wrappers don't restrict print height or keep fixed clipping / border layouts */
+  .fixed,
+  .fixed > div,
+  .fixed > div > div {
+    position: static !important;
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    transform: none !important;
+    animation: none !important;
+    padding: 0 !important;
+  }
+  
+  /* Position print-area-id at the top left of the actual printed page */
+  #print-area-id {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #0d1527 !important;
+  }
+
+  /* Force background colors and borders to print accurately on all browsers */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent elements from being awkwardly cut across page boundaries */
+  tr, p, div, blockquote {
+    page-break-inside: avoid;
+  }
+}

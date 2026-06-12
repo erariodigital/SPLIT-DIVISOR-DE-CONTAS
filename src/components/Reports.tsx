@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Comanda, Friend } from '../types';
 import { FileText, Calendar, User, Search, Filter, Printer, Download, Eye, X, Check, ArrowDown, ArrowLeft, Share2 } from 'lucide-react';
+import brandLogo from '../assets/images/split_logo_processed.png';
 
 interface ReportsProps {
   comandas: Comanda[];
@@ -20,6 +21,17 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
   const [activePaymentFilter, setActivePaymentFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
   const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
+
+  // Dynamic persistent custom logo state (User Identity)
+  const [appLogo] = useState<string>(() => {
+    const stored = localStorage.getItem('split_custom_app_logo');
+    if (stored && stored.startsWith('data:image/')) {
+      return stored;
+    }
+    return brandLogo;
+  });
+
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
 
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -257,7 +269,13 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
   };
 
   const handleNativePrint = () => {
-    window.print();
+    try {
+      window.focus();
+      window.print();
+    } catch (e) {
+      console.error('Erro ao imprimir:', e);
+      alert('A impressão automática foi impedida pelo navegador devido às restrições do iframe. Por favor, clique em "ABRIR EM NOVA ABA" (no canto superior direito do painel de testes do AI Studio) para abrir a aplicação diretamente e imprimir sem restrições!');
+    }
   };
 
   const handleShareReport = async () => {
@@ -597,6 +615,8 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
               </button>
             </div>
 
+
+
             {/* Print Area Preview */}
             <div className="p-6 flex-1 overflow-y-auto no-scrollbar font-mono text-xs text-slate-800 border-b border-slate-100 select-text bg-slate-50 relative">
               
@@ -610,6 +630,17 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
               {/* Invoice Layout */}
               <div id="print-area-id" className="space-y-4 pb-12 relative z-10">
                 <div className="text-center border-b-2 border-dashed border-slate-200 pb-4">
+                  {/* Branded Centered Logo for Print */}
+                  <div className="flex justify-center mb-3">
+                    <div className="size-12 rounded-2xl bg-gradient-to-br from-[#271a06] to-[#120a01] border border-[#b28623]/60 flex items-center justify-center overflow-hidden shadow-md">
+                      <img 
+                        src={appLogo} 
+                        alt="Logo APP" 
+                        className="size-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  </div>
                   <h1 className="font-sans font-bold text-sm uppercase tracking-wider text-slate-950">SPLIT — DIVISOR DE CONTAS</h1>
                   <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">Relatório de fechamento consolidado</p>
                   <p className="text-[9px] text-slate-400 mt-0.5 uppercase">Data de emissão: {new Date().toLocaleDateString('pt-BR')}</p>
