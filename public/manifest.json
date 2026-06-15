@@ -4,32 +4,32 @@
   "description": "Gerenciador e divisor de contas brutalista",
   "icons": [
     {
-      "src": "/SPLIT-DIVISOR-DE-CONTAS/logo_192.png?v=2",
+      "src": "logo_192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/SPLIT-DIVISOR-DE-CONTAS/logo_192.png?v=2",
+      "src": "logo_192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/SPLIT-DIVISOR-DE-CONTAS/logo_512.png?v=2",
+      "src": "logo_512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/SPLIT-DIVISOR-DE-CONTAS/logo_512.png?v=2",
+      "src": "logo_512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "start_url": "/SPLIT-DIVISOR-DE-CONTAS/",
-  "scope": "/SPLIT-DIVISOR-DE-CONTAS/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#ffffff",

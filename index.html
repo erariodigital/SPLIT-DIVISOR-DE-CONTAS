@@ -4,9 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SPLIT — DIVISOR DE CONTAS</title>
-    <link rel="icon" type="image/png" href="/SPLIT-DIVISOR-DE-CONTAS/logo.png?v=2" />
-    <link rel="apple-touch-icon" href="/SPLIT-DIVISOR-DE-CONTAS/logo_180.png?v=2" />
-    <link rel="manifest" href="/SPLIT-DIVISOR-DE-CONTAS/manifest.json?v=2" />
+    <link id="favicon" rel="icon" type="image/png" href="./logo.png?v=3" />
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="./logo_180.png?v=3" />
+    <link id="pwa-manifest" rel="manifest" href="./manifest.json?v=3" />
+    <script>
+      (function() {
+        var base = '/';
+        if (window.location.pathname.includes('/SPLIT-DIVISOR-DE-CONTAS/')) {
+          base = '/SPLIT-DIVISOR-DE-CONTAS/';
+        }
+        document.getElementById('favicon').setAttribute('href', base + 'logo.png?v=3');
+        document.getElementById('apple-touch-icon').setAttribute('href', base + 'logo_180.png?v=3');
+        document.getElementById('pwa-manifest').setAttribute('href', base + 'manifest.json?v=3');
+      })();
+    </script>
     <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

@@ -12,9 +12,13 @@ createRoot(document.getElementById('root')!).render(
 // Register PWA Service Worker for mobile installability and icon resolution
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // @ts-ignore
-    const base = import.meta.env.BASE_URL || '/';
-    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    const getBase = () => {
+      if (window.location.pathname.includes('/SPLIT-DIVISOR-DE-CONTAS/')) {
+        return '/SPLIT-DIVISOR-DE-CONTAS/';
+      }
+      return '/';
+    };
+    const cleanBase = getBase();
     navigator.serviceWorker.register(`${cleanBase}sw.js`)
       .then((reg) => {
         console.log('PWA Service Worker registered successfully scope:', reg.scope);

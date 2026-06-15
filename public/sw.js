@@ -1,14 +1,14 @@
 // Service Worker for SPLIT — DIVISOR DE CONTAS PWA installability.
-const CACHE_NAME = 'split-v4';
+const CACHE_NAME = 'split-v5';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json?v=2',
-  './logo.png?v=2',
-  './logo_180.png?v=2',
-  './logo_192.png?v=2',
-  './logo_512.png?v=2'
+  './manifest.json?v=3',
+  './logo.png?v=3',
+  './logo_180.png?v=3',
+  './logo_192.png?v=3',
+  './logo_512.png?v=3'
 ];
 
 self.addEventListener('install', (event) => {
