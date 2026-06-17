@@ -39,4 +39,5 @@ export interface UserProfile {
   avatar: string; // base64 or URL or SVG initials
   phone?: string;
   isAdmin?: boolean;
+  isLeader?: boolean;
 }

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Comanda, Friend, Item } from '../types';
-import { ArrowLeft, Plus, Sparkles, UserPlus, Trash2, CheckCircle2, Copy, Check, CornerDownRight, Menu, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, UserPlus, Trash2, CheckCircle2, Copy, Check, CornerDownRight, Menu, Edit, Lock } from 'lucide-react';
 import { identifyCurrency, CURRENCIES } from '../utils/currency';
 
 interface DetailsProps {

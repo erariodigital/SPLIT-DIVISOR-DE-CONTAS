@@ -70,17 +70,12 @@ export default function App() {
         }
       } catch (_) {}
     }
-    // Set default initial profiles corresponding to LUCAS, MARIA, JOÃO SILVA, PEDRO (JOÃO is Admin by default)
-    return [
-      { id: '1', name: 'LUCAS', email: 'lucas@email.com', pixKey: '', phone: '', avatar: '' },
-      { id: '2', name: 'MARIA', email: 'maria@email.com', pixKey: '', phone: '', avatar: '' },
-      { id: '3', name: 'JOÃO SILVA', email: 'joao.silva@email.com', pixKey: '+55 11 98765-4321', phone: '', avatar: '', isAdmin: true },
-      { id: '4', name: 'PEDRO', email: 'pedro@email.com', pixKey: '', phone: '', avatar: '' },
-    ];
+    // Starts empty! Permitting first registration as Leader.
+    return [];
   });
 
   const [activeProfileId, setActiveProfileId] = useState<string>(() => {
-    return localStorage.getItem('split_active_profile_id') || '3';
+    return localStorage.getItem('split_active_profile_id') || '';
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -89,9 +84,9 @@ export default function App() {
       try { return JSON.parse(saved); } catch (_) {}
     }
     return {
-      name: 'JOÃO SILVA',
-      email: 'joao.silva@email.com',
-      pixKey: '+55 11 98765-4321',
+      name: '',
+      email: '',
+      pixKey: '',
       avatar: ''
     };
   });
@@ -100,7 +95,7 @@ export default function App() {
   const friends: Friend[] = profiles.map((p, idx) => {
     const abbreviated = p.name ? p.name.trim().charAt(0).toUpperCase() : '?';
     const hexColors = ['#00E676', '#FF3B30', '#00B0FF', '#FFD600', '#AA00FF', '#FF6D00'];
-    const color = p.id === '3' || p.name.toUpperCase().includes('JOÃO') ? '#b28623' : hexColors[idx % hexColors.length];
+    const color = p.isLeader || idx === 0 ? '#b28623' : hexColors[idx % hexColors.length];
     return {
       id: p.id || `friend-${idx}`,
       name: p.name.toUpperCase(),
@@ -159,8 +154,9 @@ export default function App() {
   }, []);
 
   const activeProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
+  const isLeader = activeProfile?.isLeader === true || (profiles.length > 0 && profiles[0]?.id === activeProfile?.id);
   const isAutoOwner = activeProfile?.email?.trim().toLowerCase() === 'erariodigital@gmail.com';
-  const isAdmin = activeProfile?.isAdmin === true || isAutoOwner || isIdentityUnlocked;
+  const isAdmin = !isSharedMode || isIdentityUnlocked;
   
   // Sync state changes with local storage securely
   useEffect(() => {
@@ -225,17 +221,12 @@ export default function App() {
   const handleResetApp = () => {
     localStorage.clear();
     setComandas([]); // Set comandas to empty, physically ready for the next outing
-    setProfiles([
-      { id: '1', name: 'LUCAS', email: 'lucas@email.com', pixKey: '', phone: '', avatar: '' },
-      { id: '2', name: 'MARIA', email: 'maria@email.com', pixKey: '', phone: '', avatar: '' },
-      { id: '3', name: 'JOÃO SILVA', email: 'joao.silva@email.com', pixKey: '+55 11 98765-4321', phone: '', avatar: '' },
-      { id: '4', name: 'PEDRO', email: 'pedro@email.com', pixKey: '', phone: '', avatar: '' },
-    ]);
-    setActiveProfileId('3');
+    setProfiles([]); // Clear all profiles as well so they can register their Leader initially
+    setActiveProfileId('');
     setUserProfile({
-      name: 'JOÃO SILVA',
-      email: 'joao.silva@email.com',
-      pixKey: '+55 11 98765-4321',
+      name: '',
+      email: '',
+      pixKey: '',
       avatar: ''
     });
     setActiveTab('comandas');
@@ -244,6 +235,117 @@ export default function App() {
 
   // Render the appropriate component
   const renderScreen = () => {
+    if (profiles.length === 0) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-slate-50 relative overflow-y-auto no-scrollbar">
+          <div className="absolute inset-0 pointer-events-none opacity-5 overflow-hidden flex items-center justify-center">
+            <span className="text-[10rem] font-black rotate-12 select-none text-slate-900">SPLIT</span>
+          </div>
+
+          <div className="z-10 bg-white border border-slate-200 p-6 rounded-3xl shadow-elegant max-w-sm w-full">
+            <div className="size-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-5 shadow-sm mx-auto">
+              <span className="text-2xl font-black">★</span>
+            </div>
+            
+            <h2 className="text-slate-950 font-sans font-black text-xs uppercase tracking-widest mb-1.5">
+              Cadastrar Perfil Líder
+            </h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-5 leading-normal">
+              Crie o perfil principal do rolê. Apenas o Líder poderá adicionar novos perfis e alterar moedas.
+            </p>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const leadName = (formData.get('leadName') as string || '').trim().toUpperCase();
+              const leadEmail = (formData.get('leadEmail') as string || '').trim().toLowerCase();
+              const leadPix = (formData.get('leadPix') as string || '').trim();
+              const leadPhone = (formData.get('leadPhone') as string || '').trim();
+
+              if (!leadName || !leadEmail) return;
+
+              const newId = `profile-${Date.now()}`;
+              const newProfile: UserProfile = {
+                id: newId,
+                name: leadName,
+                email: leadEmail,
+                pixKey: leadPix,
+                phone: leadPhone,
+                avatar: '',
+                isLeader: true,
+                isAdmin: true
+              };
+
+              setProfiles([newProfile]);
+              setActiveProfileId(newId);
+              setUserProfile(newProfile);
+
+              localStorage.setItem('split_user_profiles', JSON.stringify([newProfile]));
+              localStorage.setItem('split_active_profile_id', newId);
+              localStorage.setItem('split_user_profile', JSON.stringify(newProfile));
+            }} className="space-y-4 text-left">
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                  Nome Completo do Líder *
+                </label>
+                <input
+                  type="text"
+                  name="leadName"
+                  required
+                  placeholder="EX: LUIZ ERARIO"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 font-sans text-xs font-bold uppercase focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                  E-mail do Líder *
+                </label>
+                <input
+                  type="email"
+                  name="leadEmail"
+                  required
+                  placeholder="EX: ERARIODIGITAL@GMAIL.COM"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 font-sans text-xs font-bold uppercase focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                  Chave PIX de Reembolso (Opcional)
+                </label>
+                <input
+                  type="text"
+                  name="leadPix"
+                  placeholder="EX: CPF, CONTATO OU CHAVE ALEATÓRIA"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 font-sans text-xs font-bold uppercase focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                  Telefone / WhatsApp (Opcional)
+                </label>
+                <input
+                  type="text"
+                  name="leadPhone"
+                  placeholder="EX: (11) 98765-4321"
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-2.5 font-sans text-xs font-bold uppercase focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-650 hover:bg-indigo-700 text-white font-sans font-extrabold text-[10px] uppercase py-3 rounded-xl tracking-wider cursor-pointer active:scale-95 transition-all shadow-md text-center"
+              >
+                Criar Perfil Líder do Rolê
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
     if (isSharedMode) {
       if (isExpired) {
         return (

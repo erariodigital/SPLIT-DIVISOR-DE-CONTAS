@@ -1,6 +1,6 @@
 {
   "name": "SPLIT — DIVISOR DE CONTAS",
   "description": "Aplicativo minimalista para dividir comandas de bares e restaurantes, registrar amigos, simular leituras e emitir relatórios.",
-  "requestFramePermissions": ["camera"],
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
