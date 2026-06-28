@@ -457,7 +457,7 @@ export default function App() {
   const hideFooter = isSharedMode;
 
   return (
-    <div className="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-800 font-sans flex flex-col items-center justify-center relative overflow-hidden animate-fade-in">
+    <div className="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans flex flex-col items-center justify-center relative overflow-hidden animate-fade-in">
       
       {/* Structured adaptive responsive wrapper container */}
       <div 

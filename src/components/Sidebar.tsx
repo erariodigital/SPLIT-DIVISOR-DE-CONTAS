@@ -194,7 +194,7 @@ export default function Sidebar({
 
       {/* Drawer Container */}
       <div 
-        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[350px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out border-r border-slate-200"
+        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[350px] bg-white dark:bg-slate-800 dark:text-slate-100 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out border-r border-slate-200 dark:border-slate-700"
         id="sidebar-drawer"
       >
         {/* Drawer Header */}
@@ -223,7 +223,7 @@ export default function Sidebar({
             
             <div className="w-20 h-20 rounded-full border-2 border-[#b28623]/60 bg-gradient-to-br from-[#271a06] to-[#120a01] p-0.5 flex items-center justify-center shadow-lg shadow-amber-955/40 overflow-hidden shrink-0 relative transition-transform hover:scale-105 duration-300">
               <img 
-                src={appLogo || '/logo.png'} 
+                src={'/logo.png'} 
                 alt="Logo Split" 
                 className="size-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
