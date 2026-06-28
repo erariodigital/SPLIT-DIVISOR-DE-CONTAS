@@ -64,11 +64,10 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
           const refUrl = new URL(document.referrer);
           base = refUrl.origin + refUrl.pathname;
         } else {
-          // Robust fallback direct to the preview container URL in AI Studio
-          base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+          base = window.location.origin + '/';
         }
       } catch (_) {
-        base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+        base = window.location.origin + '/';
       }
     }
     

@@ -65,10 +65,10 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
           const refUrl = new URL(document.referrer);
           base = refUrl.origin + refUrl.pathname;
         } else {
-          base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+          base = window.location.origin + '/';
         }
       } catch (_) {
-        base = "https://ais-pre-jais25csrw7f6vpppmo4sn-516872073432.us-east1.run.app/";
+        base = window.location.origin + '/';
       }
     }
     
