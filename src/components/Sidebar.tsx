@@ -52,6 +52,26 @@ export default function Sidebar({
   const [showQrCode, setShowQrCode] = useState(false);
   const [showDeleteProfileModal, setShowDeleteProfileModal] = useState(false);
   const [showClearDataModal, setShowClearDataModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Initialize theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = !isDarkMode;
+    setIsDarkMode(nextTheme);
+    localStorage.setItem('theme', nextTheme ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark');
+  };
   
   // Fixed Logo representing the physical branding
   const appLogo = brandLogo;
@@ -385,6 +405,19 @@ export default function Sidebar({
           )}
 
 
+
+          {/* APPEARANCE SECTION */}
+          <div className="flex items-center justify-between border-t border-slate-100 pt-5">
+            <span className="font-sans text-[10.5px] font-extrabold text-slate-400 tracking-wider uppercase block">
+              Aparência
+            </span>
+            <button
+              onClick={toggleTheme}
+              className="text-[9px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 uppercase transition-all active:scale-95 cursor-pointer"
+            >
+              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+            </button>
+          </div>
 
           {/* PERFIL SECTION */}
           <div className="space-y-4">

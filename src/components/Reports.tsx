@@ -18,6 +18,7 @@ interface ReportsProps {
 export default function Reports({ comandas, friends, onBackToHome, isSharedMode = false }: ReportsProps) {
   const [activeMonthFilter, setActiveMonthFilter] = useState<string>('todos'); // 'todos', '10', '09'
   const [activeFriendFilter, setActiveFriendFilter] = useState<string>('todos'); // 'todos', or friendId
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('todos'); // 'todos', or categoryName
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
   const [activePaymentFilter, setActivePaymentFilter] = useState<string>('todos'); // 'todos', 'pago', 'pendente'
   const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
@@ -133,6 +134,10 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
     }))
   ).filter(Boolean).sort((a, b) => b.localeCompare(a)) as string[];
 
+  const availableCategories = Array.from(
+    new Set(comandas.flatMap(c => [c.category, ...c.items.map(i => i.category)]).filter(Boolean))
+  ) as string[];
+
   // Computes grand totals
   const getComandaTotal = (comanda: Comanda): number => {
     const itemsTotal = comanda.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -217,7 +222,13 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
       if (!isFriendAssigned) return false;
     }
 
-    // 3. Paid status verification
+    // 3. Category verification
+    if (activeCategoryFilter !== 'todos') {
+      const isCategoryAssigned = comanda.category === activeCategoryFilter || comanda.items.some(item => item.category === activeCategoryFilter);
+      if (!isCategoryAssigned) return false;
+    }
+
+    // 4. Paid status verification
     if (activeStatusFilter !== 'todos') {
       const queryPaid = activeStatusFilter === 'pago';
       if (comanda.isPaid !== queryPaid) return false;
@@ -455,6 +466,21 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
               <option value="todos">Todos</option>
               {friends.map(f => (
                 <option key={f.id} value={f.id}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Category list filter */}
+          <div className="flex-1 min-w-[75px] sm:min-w-[90px] flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-1.5 sm:px-2 py-1.5 shadow-xs justify-center">
+            <span className="font-sans text-[7px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest">CAT.:</span>
+            <select
+              value={activeCategoryFilter}
+              onChange={(e) => setActiveCategoryFilter(e.target.value)}
+              className="bg-transparent text-slate-700 font-sans text-[7.5px] sm:text-[9px] font-bold uppercase border-none focus:outline-none focus:ring-0 p-0 cursor-pointer text-left leading-none shrink-0"
+            >
+              <option value="todos">Todas</option>
+              {availableCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>

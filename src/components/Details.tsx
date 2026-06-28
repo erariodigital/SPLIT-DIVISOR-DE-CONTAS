@@ -34,12 +34,14 @@ export default function Details({
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const [newItemQty, setNewItemQty] = useState('1');
+  const [newItemCategory, setNewItemCategory] = useState('');
 
   // New item editor states
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
   const [editItemQty, setEditItemQty] = useState('1');
+  const [editItemCategory, setEditItemCategory] = useState('');
 
   const [isAddFriendOpen, setIsAddFriendOpen] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
@@ -194,7 +196,8 @@ export default function Details({
           ...item,
           name: editItemName.trim(),
           price: price,
-          quantity: quantity
+          quantity: quantity,
+          category: editItemCategory.trim() || undefined
         };
       }
       return item;
@@ -220,7 +223,8 @@ export default function Details({
       name: newItemName.trim(),
       price: price,
       quantity: quantity,
-      assignedTo: friends.map(f => f.id) // Automatically assign to everyone by default
+      assignedTo: friends.map(f => f.id), // Automatically assign to everyone by default
+      category: newItemCategory.trim() || undefined
     };
 
     onUpdateComanda({
@@ -231,6 +235,7 @@ export default function Details({
     setNewItemName('');
     setNewItemPrice('');
     setNewItemQty('1');
+    setNewItemCategory('');
     setIsAddItemOpen(false);
   };
 
@@ -1036,6 +1041,45 @@ export default function Details({
                 />
               </div>
 
+              <div>
+                <label className="block font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  Categoria
+                </label>
+                <input
+                  type="text"
+                  placeholder="EX: ALIMENTAÇÃO"
+                  value={newItemCategory}
+                  onChange={(e) => setNewItemCategory(e.target.value)}
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 font-sans text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder-slate-400 text-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  Categoria
+                </label>
+                <input
+                  type="text"
+                  placeholder="EX: ALIMENTAÇÃO"
+                  value={newItemCategory}
+                  onChange={(e) => setNewItemCategory(e.target.value)}
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 font-sans text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder-slate-400 text-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  Categoria
+                </label>
+                <input
+                  type="text"
+                  placeholder="EX: ALIMENTAÇÃO"
+                  value={newItemCategory}
+                  onChange={(e) => setNewItemCategory(e.target.value)}
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 font-sans text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder-slate-400 text-slate-700"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
@@ -1113,6 +1157,19 @@ export default function Details({
                   placeholder="EX: SUCO DE CEVADA"
                   value={editItemName}
                   onChange={(e) => setEditItemName(e.target.value)}
+                  className="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 font-sans text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder-slate-400 text-slate-700"
+                />
+              </div>
+
+              <div>
+                <label className="block font-sans text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                  Categoria
+                </label>
+                <input
+                  type="text"
+                  placeholder="EX: ALIMENTAÇÃO"
+                  value={editItemCategory}
+                  onChange={(e) => setEditItemCategory(e.target.value)}
                   className="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 font-sans text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 placeholder-slate-400 text-slate-700"
                 />
               </div>

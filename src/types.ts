@@ -16,6 +16,7 @@ export interface Item {
   price: number;
   quantity: number;
   assignedTo: string[]; // Friend IDs
+  category?: string;
 }
 
 export interface Comanda {
@@ -26,6 +27,7 @@ export interface Comanda {
   serviceFeePercent: number; // e.g. 10
   isPaid: boolean;
   code: string; // e.g., 'TAB #0492'
+  category?: string;
   paidFriendIds?: string[]; // IDs of friends who have paid their share
   currency?: string;     // e.g. 'BRL', 'USD', 'EUR', 'ARS'
   exchangeRate?: number;  // e.g. 5.20 - rate to convert to BRL
