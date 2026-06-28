@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Comanda, Friend } from '../types';
 import { LayoutDashboard, TrendingUp, Users, DollarSign, ArrowLeft, Share2, Check } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { saveSharedData } from '../lib/sharing';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -40,18 +41,7 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
   const [linkExpiryHrs, setLinkExpiryHrs] = useState<number>(2);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
 
-  const utf8B64Encode = (str: string) => {
-    try {
-      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-        return String.fromCharCode(parseInt(p1, 16));
-      }));
-    } catch (e) {
-      console.error('Error encoding:', e);
-      return '';
-    }
-  };
-
-  const handleCopySharedLink = () => {
+  const handleCopySharedLink = async () => {
     let base = window.location.origin + window.location.pathname;
     
     // Check if the origin/hostname is a Google AI Studio parent frame domain
@@ -86,7 +76,6 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
     
     const expiraTimestamp = Date.now() + linkExpiryHrs * 3600000;
     
-    let dataParam = '';
     try {
       // Serialize current comandas and friends so the recipient loads identical state
       const payload = {
@@ -101,23 +90,18 @@ export default function Dashboard({ comandas, friends, onBackToHome, isSharedMod
         }))
       };
       
-      const jsonStr = JSON.stringify(payload);
-      dataParam = `&data=${utf8B64Encode(jsonStr)}`;
+      const shareId = await saveSharedData(payload, expiraTimestamp);
+      
+      const sharedUrl = `${base}?shared=true&modo=dashboard&data=${shareId}&expira=${expiraTimestamp}`;
+      
+      await navigator.clipboard.writeText(sharedUrl);
+      setShareToastMessage('LINK ENCURTADO COPIADO!');
+      setTimeout(() => setShareToastMessage(null), 3000);
     } catch (err) {
       console.error('Failed to bundle data payload for dashboard link:', err);
+      setShareToastMessage('ERRO AO COPIAR LINK');
+      setTimeout(() => setShareToastMessage(null), 3000);
     }
-
-    const sharedUrl = `${base}?modo=dashboard${dataParam}&expira=${expiraTimestamp}`;
-    
-    navigator.clipboard.writeText(sharedUrl)
-      .then(() => {
-        setShareToastMessage('LINK DO DASHBOARD COPIADO COM SUCESSO!');
-        setTimeout(() => setShareToastMessage(null), 3000);
-      })
-      .catch(() => {
-        setShareToastMessage('ERRO AO COPIAR LINK');
-        setTimeout(() => setShareToastMessage(null), 3000);
-      });
   };
 
   // Dynamically extract unique months

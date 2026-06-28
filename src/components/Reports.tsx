@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Comanda, Friend } from '../types';
 import { FileText, Calendar, User, Search, Filter, Printer, Download, Eye, X, Check, ArrowDown, ArrowLeft, Share2 } from 'lucide-react';
 import brandLogo from '../assets/images/split_logo_processed.png';
+import { saveSharedData } from '../lib/sharing';
 
 interface ReportsProps {
   comandas: Comanda[];
@@ -38,6 +39,7 @@ export default function Reports({ comandas, friends, onBackToHome, isSharedMode 
   // Print popup modals
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+
 
   const utf8B64Encode = (str: string) => {
     try {

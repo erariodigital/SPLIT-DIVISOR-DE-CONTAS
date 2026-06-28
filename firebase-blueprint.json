@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "Share": {
+      "title": "Share",
+      "description": "Shared application state",
+      "type": "object",
+      "properties": {
+        "comandas": { "type": "array", "description": "Shared comandas" },
+        "profiles": { "type": "array", "description": "Shared profiles" },
+        "expiresAt": { "type": "number", "description": "Expiration timestamp" }
+      },
+      "required": ["comandas", "profiles", "expiresAt"]
+    }
+  },
+  "firestore": {
+    "/shares/{shareId}": {
+      "schema": { "$ref": "Share" },
+      "description": "Stores shared application state for URL shortener"
+    }
+  }
+}

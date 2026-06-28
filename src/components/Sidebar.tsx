@@ -52,26 +52,6 @@ export default function Sidebar({
   const [showQrCode, setShowQrCode] = useState(false);
   const [showDeleteProfileModal, setShowDeleteProfileModal] = useState(false);
   const [showClearDataModal, setShowClearDataModal] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = !isDarkMode;
-    setIsDarkMode(nextTheme);
-    localStorage.setItem('theme', nextTheme ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark');
-  };
   
   // Fixed Logo representing the physical branding
   const appLogo = brandLogo;
@@ -194,7 +174,7 @@ export default function Sidebar({
 
       {/* Drawer Container */}
       <div 
-        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[350px] bg-white dark:bg-slate-800 dark:text-slate-100 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out border-r border-slate-200 dark:border-slate-700"
+        className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-[350px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out border-r border-slate-200"
         id="sidebar-drawer"
       >
         {/* Drawer Header */}
@@ -223,12 +203,12 @@ export default function Sidebar({
             
             <div className="w-20 h-20 rounded-full border-2 border-[#b28623]/60 bg-gradient-to-br from-[#271a06] to-[#120a01] p-0.5 flex items-center justify-center shadow-lg shadow-amber-955/40 overflow-hidden shrink-0 relative transition-transform hover:scale-105 duration-300">
               <img 
-                src={'/logo.png'} 
+                src={'/logo_512.png'} 
                 alt="Logo Split" 
                 className="size-full object-cover rounded-full"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  e.currentTarget.src = '/logo.png';
+                  e.currentTarget.src = '/logo_512.png';
                 }}
               />
             </div>
@@ -405,19 +385,6 @@ export default function Sidebar({
           )}
 
 
-
-          {/* APPEARANCE SECTION */}
-          <div className="flex items-center justify-between border-t border-slate-100 pt-5">
-            <span className="font-sans text-[10.5px] font-extrabold text-slate-400 tracking-wider uppercase block">
-              Aparência
-            </span>
-            <button
-              onClick={toggleTheme}
-              className="text-[9px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 uppercase transition-all active:scale-95 cursor-pointer"
-            >
-              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-            </button>
-          </div>
 
           {/* PERFIL SECTION */}
           <div className="space-y-4">

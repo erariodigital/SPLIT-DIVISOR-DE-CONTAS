@@ -12,6 +12,7 @@ import Reports from './components/Reports';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import { Receipt, FileText, LayoutDashboard } from 'lucide-react';
+import { loadSharedData, SharedData } from './lib/sharing';
 
 export default function App() {
   // UTF-8 Base64 Decoding Helper to read shared state in the access link
@@ -43,9 +44,29 @@ export default function App() {
     window.location.search.includes('shared=true')
   );
 
-  const sharedData = isSharedMode && parsedData ? decodeSharedData(parsedData) : null;
+  const [sharedData, setSharedData] = useState<SharedData | null>(null);
+  const [isLoadingSharedData, setIsLoadingSharedData] = useState(false);
 
-  // Local storage state initialization hooks
+  useEffect(() => {
+    if (isSharedMode && parsedData) {
+      if (window.location.search.includes('shared=true')) {
+        setIsLoadingSharedData(true);
+        loadSharedData(parsedData).then((data) => {
+          setSharedData(data);
+          setIsLoadingSharedData(false);
+        });
+      } else {
+        setSharedData(decodeSharedData(parsedData));
+      }
+    }
+  }, [isSharedMode, parsedData]);
+
+  useEffect(() => {
+    if (sharedData) {
+      if (sharedData.comandas) setComandas(sharedData.comandas);
+      if (sharedData.profiles) setProfiles(sharedData.profiles);
+    }
+  }, [sharedData]);
   const [comandas, setComandas] = useState<Comanda[]>(() => {
     if (isSharedMode && sharedData && Array.isArray(sharedData.comandas)) {
       return sharedData.comandas;
@@ -457,7 +478,7 @@ export default function App() {
   const hideFooter = isSharedMode;
 
   return (
-    <div className="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans flex flex-col items-center justify-center relative overflow-hidden animate-fade-in">
+    <div className="h-screen h-[100dvh] w-screen bg-slate-100 text-slate-800 font-sans flex flex-col items-center justify-center relative overflow-hidden animate-fade-in">
       
       {/* Structured adaptive responsive wrapper container */}
       <div 
